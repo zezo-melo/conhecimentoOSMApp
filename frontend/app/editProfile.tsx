@@ -16,118 +16,114 @@ import {
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import Header from '@/components/Header';
 
 export default function UpdateProfileScreen() {
   const { user, updateProfile, isLoading, completeMission } = useAuth();
+  
   const [name, setName] = useState('');
-  const [dob, setDob] = useState(new Date());
-  const [dobDisplay, setDobDisplay] = useState('');
-  const [docType, setDocType] = useState('cpf');
-  const [document, setDocument] = useState('');
   const [phone, setPhone] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [bio, setBio] = useState('');
+
   const router = useRouter();
 
-  
-  // Função para carregar os dados do usuário ao abrir a tela
   useEffect(() => {
     if (user && user.profile) {
       setName(user.profile.name || '');
-      // Se a data de nascimento existe, formata para exibição
-      if (user.profile.dob) {
-        const date = new Date(user.profile.dob);
-        setDob(date);
-        const formattedDate = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-        setDobDisplay(formattedDate);
-      }
-      setDocType(user.profile.docType || 'cpf');
-      setDocument(user.profile.document || '');
       setPhone(user.profile.phone || '');
+      setPhotoUrl(user.profile.photoUrl || null);
+      setAddress(user.profile.address || '');
+      setCity(user.profile.city || '');
+      setState(user.profile.state || '');
+      setZipCode(user.profile.zipCode || '');
+      setBio(user.profile.bio || '');
     }
   }, [user]);
 
-  const formatDocument = (text) => {
-    let formattedText = text.replace(/\D/g, '');
-    if (docType === 'cpf') {
-      if (formattedText.length > 9) {
-        formattedText = formattedText.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-      } else if (formattedText.length > 6) {
-        formattedText = formattedText.replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3');
-      } else if (formattedText.length > 3) {
-        formattedText = formattedText.replace(/(\d{3})(\d{3})/, '$1.$2');
-      }
-      formattedText = formattedText.substring(0, 14);
-    } else {
-      if (formattedText.length > 12) {
-        formattedText = formattedText.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-      } else if (formattedText.length > 8) {
-        formattedText = formattedText.replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '$1.$2.$3/$4');
-      } else if (formattedText.length > 5) {
-        formattedText = formattedText.replace(/(\d{2})(\d{3})(\d{3})/, '$1.$2.$3');
-      } else if (formattedText.length > 2) {
-        formattedText = formattedText.replace(/(\d{2})(\d{3})/, '$1.$2');
-      }
-      formattedText = formattedText.substring(0, 18);
+  const handleImagePicker = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permissão necessária', 'Precisamos de permissão para acessar a sua galeria.');
+      return;
     }
-    setDocument(formattedText);
-  };
 
-  const handleDateChange = (event, selectedDate) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      setDob(selectedDate);
-      const formattedDate = `${selectedDate.getDate().toString().padStart(2, '0')}/${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
-      setDobDisplay(formattedDate);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setPhotoUrl(result.assets[0].uri);
     }
   };
 
   const handleUpdate = async () => {
-    if (!name || !dob || !document || !phone) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios');
+    if (!name || !phone) {
+      Alert.alert('Erro', 'Por favor, preencha o nome e o telefone.');
       return;
     }
 
     const updatedData = {
       name,
-      dob: dob.toISOString(), // Salva a data no formato ISO
-      docType,
-      document,
       phone,
+      photoUrl,
+      address,
+      city,
+      state,
+      zipCode,
+      bio,
     };
 
     try {
       await updateProfile(updatedData);
       await completeMission('1');
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
-      router.replace('/profile'); 
-    } catch (error) {
+      router.replace('/profile');
+    } catch (error: any) {
       Alert.alert('Erro', error.message || 'Falha ao atualizar o perfil. Tente novamente.');
     }
   };
 
-
+  const getInitial = (userName: string) => {
+    return userName ? userName.charAt(0).toUpperCase() : '';
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
-            {/* Logo e Título */}
             <View style={styles.header}>
               <Text style={styles.title}>Atualizar Perfil</Text>
-              <Text style={styles.subtitle}>Altere suas informações da conta</Text>
+              <Text style={styles.subtitle}>Altere as suas informações da conta</Text>
             </View>
 
-            {/* Formulário */}
+            <TouchableOpacity onPress={handleImagePicker} style={styles.profileImageContainer}>
+              {photoUrl ? (
+                <Image source={{ uri: photoUrl }} style={styles.profileImage} />
+              ) : (
+                <View style={styles.initialContainer}>
+                  <Text style={styles.initialText}>{getInitial(name)}</Text>
+                </View>
+              )}
+              <View style={styles.cameraIcon}>
+                <Ionicons name="camera" size={24} color="#fff" />
+              </View>
+            </TouchableOpacity>
+
             <View style={styles.form}>
-              {/* Campo Nome */}
               <View style={styles.inputContainer}>
                 <View style={styles.inputIcon}>
                   <Ionicons name="person" size={20} color="#4a7f37" />
@@ -143,7 +139,6 @@ export default function UpdateProfileScreen() {
                 />
               </View>
 
-              {/* Campo Email - não editável */}
               <View style={styles.inputContainer}>
                 <View style={styles.inputIcon}>
                   <Ionicons name="mail" size={20} color="#4a7f37" />
@@ -152,84 +147,11 @@ export default function UpdateProfileScreen() {
                   style={[styles.input, styles.inputDisabled]}
                   placeholder="Email"
                   placeholderTextColor="#999"
-                  value={user?.email || ''} // Exibe o email do usuário logado
+                  value={user?.email || ''}
                   editable={false}
                 />
               </View>
 
-              {/* Campo Data de Nascimento com Seletor */}
-              <TouchableOpacity onPress={() => setShowDatePicker(true)} disabled={isLoading}>
-                <View style={styles.inputContainer}>
-                  <View style={styles.inputIcon}>
-                    <Ionicons name="calendar" size={20} color="#4a7f37" />
-                  </View>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Data de Nascimento (DD/MM/AAAA)"
-                    placeholderTextColor="#999"
-                    value={dobDisplay}
-                    editable={false}
-                  />
-                </View>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={dob}
-                  mode="date"
-                  display="default"
-                  onChange={handleDateChange}
-                />
-              )}
-
-              {/* Radio CPF/CNPJ e Campo Documento */}
-              <View style={styles.radioGroup}>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => {
-                    setDocType('cpf');
-                    setDocument('');
-                  }}
-                  disabled={isLoading}
-                >
-                  <Ionicons
-                    name={docType === 'cpf' ? 'radio-button-on' : 'radio-button-off'}
-                    size={20}
-                    color="#4a7f37"
-                  />
-                  <Text style={styles.radioText}>CPF</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.radioOption}
-                  onPress={() => {
-                    setDocType('cnpj');
-                    setDocument('');
-                  }}
-                  disabled={isLoading}
-                >
-                  <Ionicons
-                    name={docType === 'cnpj' ? 'radio-button-on' : 'radio-button-off'}
-                    size={20}
-                    color="#4a7f37"
-                  />
-                  <Text style={styles.radioText}>CNPJ</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputIcon}>
-                  <Ionicons name="document" size={20} color="#4a7f37" />
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder={docType === 'cpf' ? 'Digite seu CPF' : 'Digite seu CNPJ'}
-                  placeholderTextColor="#999"
-                  value={document}
-                  onChangeText={formatDocument}
-                  keyboardType="numeric"
-                  editable={!isLoading}
-                />
-              </View>
-
-              {/* Campo Telefone */}
               <View style={styles.inputContainer}>
                 <View style={styles.inputIcon}>
                   <Ionicons name="call" size={20} color="#4a7f37" />
@@ -245,7 +167,79 @@ export default function UpdateProfileScreen() {
                 />
               </View>
 
-              {/* Botão de Atualizar */}
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <Ionicons name="location" size={20} color="#4a7f37" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Endereço"
+                  placeholderTextColor="#999"
+                  value={address}
+                  onChangeText={setAddress}
+                  editable={!isLoading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <Ionicons name="location" size={20} color="#4a7f37" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Cidade"
+                  placeholderTextColor="#999"
+                  value={city}
+                  onChangeText={setCity}
+                  editable={!isLoading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <Ionicons name="map" size={20} color="#4a7f37" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Estado"
+                  placeholderTextColor="#999"
+                  value={state}
+                  onChangeText={setState}
+                  editable={!isLoading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <Ionicons name="location" size={20} color="#4a7f37" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="CEP"
+                  placeholderTextColor="#999"
+                  value={zipCode}
+                  onChangeText={setZipCode}
+                  keyboardType="numeric"
+                  editable={!isLoading}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIcon}>
+                  <Ionicons name="book" size={20} color="#4a7f37" />
+                </View>
+                <TextInput
+                  style={[styles.input, styles.bioInput]}
+                  placeholder="Biografia breve"
+                  placeholderTextColor="#999"
+                  value={bio}
+                  onChangeText={setBio}
+                  multiline
+                  numberOfLines={4}
+                  editable={!isLoading}
+                />
+              </View>
+
               <TouchableOpacity
                 style={[styles.updateButton, isLoading && styles.updateButtonDisabled]}
                 onPress={handleUpdate}
@@ -294,13 +288,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 40,
   },
-  logoContainer: {
-    marginBottom: 20,
-  },
-  logo: {
-    width: 120,
-    height: 60,
-  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -311,6 +298,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  profileImageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#4a7f37',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  profileImage: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+  },
+  initialContainer: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: '#4a7f37',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  initialText: {
+    color: '#fff',
+    fontSize: 50,
+    fontWeight: 'bold',
+  },
+  cameraIcon: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    backgroundColor: '#4a7f37',
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   form: {
     flex: 1,
@@ -338,24 +364,13 @@ const styles = StyleSheet.create({
     color: '#333',
     paddingVertical: 16,
   },
+  bioInput: {
+    minHeight: 100,
+    textAlignVertical: 'center',
+  },
   inputDisabled: {
     backgroundColor: '#e9ecef',
     color: '#999',
-  },
-  radioGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  radioOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  radioText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#333',
   },
   updateButton: {
     backgroundColor: '#4a7f37',
