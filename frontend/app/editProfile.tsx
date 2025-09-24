@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,38 +14,27 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Header from '@/components/Header';
 
 export default function UpdateProfileScreen() {
   const { user, updateProfile, isLoading, completeMission } = useAuth();
-  
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [zipCode, setZipCode] = useState('');
-  const [bio, setBio] = useState('');
-
   const router = useRouter();
 
-  useEffect(() => {
-    if (user && user.profile) {
-      setName(user.profile.name || '');
-      setPhone(user.profile.phone || '');
-      setPhotoUrl(user.profile.photoUrl || null);
-      setAddress(user.profile.address || '');
-      setCity(user.profile.city || '');
-      setState(user.profile.state || '');
-      setZipCode(user.profile.zipCode || '');
-      setBio(user.profile.bio || '');
-    }
-  }, [user]);
+  // Inicializa o estado com os dados do usuário ou com strings vazias
+  const [name, setName] = useState(user?.profile?.name || '');
+  const [phone, setPhone] = useState(user?.profile?.phone || '');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(user?.profile?.photoUrl || null);
+  const [address, setAddress] = useState(user?.profile?.address || '');
+  const [city, setCity] = useState(user?.profile?.city || '');
+  const [state, setState] = useState(user?.profile?.state || '');
+  const [zipCode, setZipCode] = useState(user?.profile?.zipCode || '');
+  const [bio, setBio] = useState(user?.profile?.bio || '');
 
+  // O useEffect não é mais necessário porque o estado é inicializado diretamente com os dados do usuário
+  
   const handleImagePicker = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -130,7 +119,7 @@ export default function UpdateProfileScreen() {
                 </View>
                 <TextInput
                   style={styles.input}
-                  placeholder="Nome completo"
+                  placeholder={user?.name}
                   placeholderTextColor="#999"
                   value={name}
                   onChangeText={setName}

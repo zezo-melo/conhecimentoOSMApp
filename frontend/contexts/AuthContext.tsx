@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+import { Alert } from 'react-native';
+import { API_URL } from '../constants'; // Importa a URL do novo ficheiro
 
 // Simulação de AsyncStorage para o ambiente do Canvas
 const asyncStorage = {
@@ -13,24 +13,12 @@ const asyncStorage = {
 };
 
 // Simulação de Alert para o ambiente do Canvas
-const Alert = {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const CanvasAlert = {
   alert: (title, message) => {
     console.log(`ALERTA: ${title}\n${message}`);
   }
 };
-
-// Objeto de configuração para URLs da API
-const API_CONFIG = {
-  // A URL base da sua API sem o caminho de rota
-  emulator: 'http://10.0.2.2:3000/api', 
-  // Para testar em um celular na mesma rede local que o seu PC
-  localNetwork: 'http://192.168.1.15:3000/api',
-  // Para o seu backend hospedado no Vercel
-  vercel: 'https://seu-backend-incrivel.vercel.app/api',
-};
-
-// A URL base que aponta para o seu backend
-const API_URL = API_CONFIG.emulator; 
 
 interface User {
   id: string;
@@ -89,10 +77,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadStoredUser = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem('@AppBeneficios:token');
+      const storedToken = await asyncStorage.getItem('@AppBeneficios:token');
       if (storedToken) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        // Faz a chamada para a rota de perfil correta no backend
         const response = await axios.get(`${API_URL}/profile`);
         setUser(response.data);
       }
@@ -107,23 +94,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Faz a chamada para a rota de login no backend
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
       const { token } = response.data;
-
-      await AsyncStorage.setItem('@AppBeneficios:token', token);
-  
+      await asyncStorage.setItem('@AppBeneficios:token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  
-      // Busca os dados do usuário logado na rota de perfil
-
-      // Define o token no axios para futuras requisições
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      // Busca os dados reais do usuário logado
       const profileResponse = await axios.get(`${API_URL}/profile`);
       setUser(profileResponse.data);
-
       Alert.alert('Sucesso', 'Login realizado com sucesso!');
     } catch (error: any) {
       console.error('Erro no login:', error.response?.data || error.message);
@@ -136,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setUser(null);
-      await AsyncStorage.removeItem('@AppBeneficios:token');
+      await asyncStorage.removeItem('@AppBeneficios:token');
       delete axios.defaults.headers.common['Authorization'];
     } catch (error) {
       console.log('Erro no logout:', error);
@@ -146,7 +122,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUp = async (data: UserRegistrationData) => {
     setIsLoading(true);
     try {
-      // Faz a chamada para a rota de registro no backend
       const response = await axios.post(`${API_URL}/auth/register`, data);
       Alert.alert('Sucesso', response.data.message);
     } catch (error: any) {
@@ -160,12 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (profileData: Partial<User['profile']>) => {
     setIsLoading(true);
     try {
-      // Faz a chamada para a rota de atualização de perfil no backend
       const response = await axios.put(`${API_URL}/profile`, profileData);
-  
       const updatedUser = response.data;
       setUser(updatedUser);
-  
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error.response?.data || error.message);
@@ -177,23 +149,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const completeMission = async (missionId: string) => {
-        setIsLoading(true);
-        try {
-            const response = await axios.post(`${API_URL}/missions/complete-first-mission`, { missionId });
-
-            // Atualiza o estado do usuário com os dados recebidos do backend
-            setUser(response.data.user);
-            Alert.alert('Sucesso', response.data.message);
-
-            return true; // Retorna true para indicar que a missão foi completada
-        } catch (error) {
-            console.error('Erro ao completar missão:', error.response?.data || error.message);
-            Alert.alert('Erro', error.response?.data?.message || 'Falha ao completar a missão.');
-            return false;
-        } finally {
-            setIsLoading(false);
-        }
-      };
+    setIsLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/missions/complete-first-mission`, { missionId });
+      setUser(response.data.user);
+      Alert.alert('Sucesso', response.data.message);
+      return true;
+    } catch (error) {
+      console.error('Erro ao completar missão:', error.response?.data || error.message);
+      Alert.alert('Erro', error.response?.data?.message || 'Falha ao completar a missão.');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <AuthContext.Provider
