@@ -7,15 +7,15 @@ import { API_URL } from '../constants'; // Importa a URL do novo ficheiro
 // Simulação de AsyncStorage para o ambiente do Canvas
 const asyncStorage = {
   data: {},
-  getItem: async (key) => asyncStorage.data[key] || null,
-  setItem: async (key, value) => { asyncStorage.data[key] = value; },
-  removeItem: async (key) => { delete asyncStorage.data[key]; },
+  getItem: async (key: string) => asyncStorage.data[key] || null, // Adicionado tipo 'key'
+  setItem: async (key: string, value: any) => { asyncStorage.data[key] = value; }, // Adicionado tipos
+  removeItem: async (key: string) => { delete asyncStorage.data[key]; }, // Adicionado tipo 'key'
 };
 
 // Simulação de Alert para o ambiente do Canvas
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CanvasAlert = {
-  alert: (title, message) => {
+  alert: (title: string, message: string) => { // Adicionado tipos
     console.log(`ALERTA: ${title}\n${message}`);
   }
 };
@@ -28,13 +28,26 @@ interface User {
   xp: number;
   points: number;
   missions: number;
-  profile?: { 
-    name: string;
-    dob: string;
-    docType: string;
-    document: string;
-    phone: string;
+  
+  // NOVO CAMPO DA MISSÃO (Root do User, conforme User.js)
+  profileMissionCompleted: boolean; 
+
+  // CAMPOS DE PERFIL (Root do User, conforme User.js)
+  dob: string;
+  docType: string;
+  document: string;
+  phone: string; 
+  bio?: string;
+  
+  // CAMPO DE ENDEREÇO (Sub-documento no User.js)
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    // Se seu User.js tiver zipCode, adicione aqui
   };
+
+  // O OBJETO 'profile' aninhado foi REMOVIDO para eliminar a tipagem conflitante
 }
 
 interface UserRegistrationData {
@@ -54,7 +67,9 @@ interface AuthContextData {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (data: UserRegistrationData) => Promise<void>;
   signOut: () => Promise<void>;
-  updateProfile: (data: Partial<User['profile']>) => Promise<void>;
+  // CORRIGIDO: Agora aceita Partial<User> (campos planos)
+  updateProfile: (data: Partial<User>) => Promise<void>; 
+  // completeMission removido do tipo
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -84,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(response.data);
       }
     } catch (error: any) {
-      console.log('Erro ao carregar usuário:', error.response?.data || error.message);
+      console.log('Erro ao carregar usuário:', (error as any).response?.data || (error as any).message);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -132,37 +147,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateProfile = async (profileData: Partial<User['profile']>) => {
+  // CORRIGIDO: Agora espera Partial<User> (campos planos)
+  const updateProfile = async (profileData: Partial<User>) => { 
     setIsLoading(true);
     try {
-      const response = await axios.put(`${API_URL}/profile`, profileData);
+      // O profileData agora contém campos planos (phone, bio, etc.) e o backend espera isso.
+      const response = await axios.put(`${API_URL}/profile`, profileData); 
       const updatedUser = response.data;
       setUser(updatedUser);
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
     } catch (error) {
-      console.error('Erro ao atualizar perfil:', error.response?.data || error.message);
-      Alert.alert('Erro', error.response?.data?.message || 'Falha ao atualizar o perfil. Tente novamente.');
+      const err = error as any;
+      console.error('Erro ao atualizar perfil:', err.response?.data || err.message);
+      Alert.alert('Erro', err.response?.data?.message || 'Falha ao atualizar o perfil. Tente novamente.');
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const completeMission = async (missionId: string) => {
-    setIsLoading(true);
-    try {
-      const response = await axios.post(`${API_URL}/missions/complete-first-mission`, { missionId });
-      setUser(response.data.user);
-      Alert.alert('Sucesso', response.data.message);
-      return true;
-    } catch (error) {
-      console.error('Erro ao completar missão:', error.response?.data || error.message);
-      Alert.alert('Erro', error.response?.data?.message || 'Falha ao completar a missão.');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <AuthContext.Provider
@@ -174,7 +177,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         signOut,
         updateProfile,
-        completeMission,
       }}
     >
       {children}

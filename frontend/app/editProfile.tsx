@@ -16,22 +16,24 @@ import {
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Header from '@/components/Header';
 
 export default function UpdateProfileScreen() {
-  const { user, updateProfile, isLoading, completeMission } = useAuth();
+  const { user, updateProfile, isLoading } = useAuth();
   const router = useRouter();
 
   // Inicializa o estado com os dados do usuário ou com strings vazias
-  const [name, setName] = useState(user?.profile?.name || '');
-  const [phone, setPhone] = useState(user?.profile?.phone || '');
-  const [photoUrl, setPhotoUrl] = useState<string | null>(user?.profile?.photoUrl || null);
-  const [address, setAddress] = useState(user?.profile?.address || '');
-  const [city, setCity] = useState(user?.profile?.city || '');
-  const [state, setState] = useState(user?.profile?.state || '');
-  const [zipCode, setZipCode] = useState(user?.profile?.zipCode || '');
-  const [bio, setBio] = useState(user?.profile?.bio || '');
+  const [name, setName] = useState(user?.profile?.name || user?.name || '');
+  const [phone, setPhone] = useState(user?.profile?.phone || user?.phone || '');
+  // Os campos abaixo são opcionais, inicializa como string vazia se não existir
+  const [photoUrl, setPhotoUrl] = useState<string | null>((user?.profile?.photoUrl as string) || '');
+  const [address, setAddress] = useState((user?.profile?.address as string) || '');
+  const [city, setCity] = useState((user?.profile?.city as string) || '');
+  const [state, setState] = useState((user?.profile?.state as string) || '');
+  const [zipCode, setZipCode] = useState((user?.profile?.zipCode as string) || '');
+  const [bio, setBio] = useState((user?.profile?.bio as string) || '');
 
   // O useEffect não é mais necessário porque o estado é inicializado diretamente com os dados do usuário
   
@@ -73,7 +75,6 @@ export default function UpdateProfileScreen() {
 
     try {
       await updateProfile(updatedData);
-      await completeMission('1');
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
       router.replace('/profile');
     } catch (error: any) {
@@ -81,7 +82,7 @@ export default function UpdateProfileScreen() {
     }
   };
 
-  const getInitial = (userName: string) => {
+  const getInitial = (userName?: string) => {
     return userName ? userName.charAt(0).toUpperCase() : '';
   };
 
@@ -104,7 +105,7 @@ export default function UpdateProfileScreen() {
                 <Image source={{ uri: photoUrl }} style={styles.profileImage} />
               ) : (
                 <View style={styles.initialContainer}>
-                  <Text style={styles.initialText}>{getInitial(name)}</Text>
+                  <Text style={styles.initialText}>{getInitial(user?.name || '')}</Text>
                 </View>
               )}
               <View style={styles.cameraIcon}>

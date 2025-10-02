@@ -72,3 +72,71 @@ exports.getProfile = async (req, res) => {
       res.status(500).json({ message: 'Erro do servidor.' });
   }
 };
+
+
+exports.updateProfile = async (req, res) => {
+    const userId = req.userId; 
+    const updates = req.body; 
+    let pointsAwarded = false; // Flag de controle
+
+    console.log('--- Iniciando atualização de perfil para userId:', userId, '---');
+    console.log('Dados recebidos (updates):', updates);
+
+    try {
+        const user = await User.findById(userId); 
+
+        if (!user) {
+            console.log('ERRO: Usuário não encontrado.');
+            return res.status(404).json({ message: 'Usuário não encontrado' });
+        }
+        
+        console.log('Status atual da missão:', user.profileMissionCompleted);
+        console.log('Pontos atuais:', user.points);
+
+        // 1. LÓGICA DA MISSÃO: Conceder 10 pontos apenas na primeira vez
+        if (!user.profileMissionCompleted) {
+            user.points += 10;
+            user.profileMissionCompleted = true; 
+            pointsAwarded = true;
+            console.log('MISSÃO COMPLETA! Adicionando 10 pontos. Novos pontos:', user.points);
+        } else {
+            console.log('Missão já foi completada. Não adicionando pontos.');
+        }
+        
+        // 2. ATUALIZAÇÃO DOS DADOS DO PERFIL (Campos FLAT/ROOT e Sub-documentos)
+        // Você deve garantir que TODOS os campos que o frontend envia são mapeados aqui.
+        if (updates.name) user.name = updates.name; 
+        if (updates.dob) user.dob = updates.dob;
+        if (updates.docType) user.docType = updates.docType;
+        if (updates.document) user.document = updates.document;
+        if (updates.phone) user.phone = updates.phone;
+        if (updates.bio) user.bio = updates.bio;
+        
+        // Atualiza campos de ENDEREÇO (Sub-documento 'address')
+        if (updates.address) {
+            Object.assign(user.address, updates.address);
+        }
+        // Se a tela de edição envia city, state, etc. como campos de ROOT (e não dentro de 'address'):
+        if (updates.city) user.address.city = updates.city;
+        if (updates.state) user.address.state = updates.state; 
+        // Se a tela de edição tem o campo CEP, você precisa ter ele no User.js ou mapear ele aqui
+        if (updates.zipCode && user.address) user.address.zipCode = updates.zipCode; 
+        
+        console.log('Salvando usuário no banco de dados...');
+        await user.save(); 
+        console.log('Usuário salvo com sucesso.');
+
+        // 3. RETORNA O OBJETO ATUALIZADO
+        const updatedUser = user.toObject();
+        delete updatedUser.password;
+        
+        console.log('Retornando objeto atualizado para o frontend. Novos pontos:', updatedUser.points);
+
+        return res.status(200).json(updatedUser); 
+
+    } catch (error) {
+        console.error('ERRO CRÍTICO AO SALVAR PERFIL:', error);
+        return res.status(500).json({ message: 'Falha ao salvar o perfil.', error: error.message });
+    }
+};
+

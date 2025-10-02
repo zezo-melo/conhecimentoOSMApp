@@ -5,8 +5,7 @@ import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatName } from "../../utils/formatName";
 
-
-// Dados das missões com mais opções
+// Os dados das missões permanecem os mesmos
 const MISSIONS = [
   { id: '1', title: 'Preencha seu perfil', points: '+10 pontos', completed: false },
   { id: '2', title: 'Participe de um desafio', points: '+20 pontos', completed: false },
@@ -25,88 +24,95 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // 1. FUNÇÃO SIMPLIFICADA
+  const handleMissionPress = (missionId: string) => {
+    setSelectedMissionId(selectedMissionId === missionId ? null : missionId);
+  };
 
+  // 2. FUNÇÃO SIMPLIFICADA: APENAS NAVEGA PARA EDIÇÃO
+  const handleFirstMissionAction = () => {
+    // A lógica de ganho de pontos é 100% no backend.
+    router.push('/editProfile');
+  };
 
-    const handleMissionPress = (missionId: string) => {
-          setSelectedMissionId(selectedMissionId === missionId ? null : missionId);
-      };
+  // 3. FUNÇÃO QUE CHECA O STATUS NO CONTEXTO (QUE VEM DO BACKEND)
+  const isMissionCompleted = (missionId: string) => {
+    if (missionId === '1') {
+        // Usa o campo correto do objeto user que vem do AuthContext/Backend
+        return user?.profileMissionCompleted === true; 
+    }
+    // Lógica futura para outras missões...
+    return false;
+};
 
-    const handleFirstMissionAction = () => {
-        if (user?.profile?.name) {
-            // Se o perfil já estiver preenchido, a missão já está completa
-            alert('Missão já completada!');
-        } else {
-            // Se não, leva o usuário para a tela de edição de perfil
-            router.push('/editProfile');
-        }
-    };
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <Header />
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.greetingSectionMentorh}>
+          <Text style={styles.greetingTextMentorh}>Seu MentoRH de conhecimentos</Text>
+        </View>
+        <View style={styles.greetingSection}>
+          <Text style={styles.greetingText}>Olá! {formatName(user?.name)} 👋</Text>
+          <Text style={styles.subtitleText}>Pronto para mais uma missão?</Text>
+        </View>
 
-    const isMissionCompleted = (missionId: string) => {
-        // Lógica para verificar se a missão está completa
-        if (missionId === '1' && user?.profile?.name) {
-            return user?.missions >= 1;
-        }
-        // Lógica futura para outras missões...
-        return false;
-    };
+        {/* Container das missões */}
+        <View style={styles.missionsContainer}>
+          {/* Linha central */}
+          <View style={styles.centralLine} />
 
-return (
-        <SafeAreaView style={styles.safeArea}>
-            <Header />
-            <ScrollView 
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContainer}
-                showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.greetingSection}>
-                <Text style={styles.greetingText}>Olá! {formatName(user?.name)} 👋</Text>
-                <Text style={styles.subtitleText}>Pronto para mais uma missão?</Text>
-              </View>
+          {/* Missões */}
+          {MISSIONS.map((mission, index) => {
+            const isCompleted = isMissionCompleted(mission.id);
+            return (
+              <TouchableOpacity
+                key={mission.id}
+                style={[
+                  styles.missionNode,
+                  { top: 60 + (index * 220) },
+                  isCompleted && styles.missionNodeCompleted
+                ]}
+                // Se a missão 1 estiver completa, o clique não expande mais o balão
+                onPress={() => !isCompleted && handleMissionPress(mission.id)}
+                disabled={isCompleted} // Desabilita o node se estiver completa
+              >
+                {/* Círculo da missão */}
+                <View style={[styles.missionCircle, isCompleted && styles.completedCircle]}>
+                  <Text style={styles.missionNumber}>{isCompleted ? '✓' : index + 1}</Text>
+                </View>
 
-                {/* Container das missões */}
-                <View style={styles.missionsContainer}>
-                    {/* Linha central */}
-                    <View style={styles.centralLine} />
-
-                    {/* Missões */}
-                    {MISSIONS.map((mission, index) => {
-                        const isCompleted = isMissionCompleted(mission.id);
-                        return (
-                            <TouchableOpacity
-                                key={mission.id}
-                                style={[
-                                    styles.missionNode,
-                                    { top: 60 + (index * 220) } 
-                                ]}
-                                onPress={() => handleMissionPress(mission.id)}
-                            >
-                                {/* Círculo da missão */}
-                                <View style={[styles.missionCircle, isCompleted && styles.completedCircle]}>
-                                    <Text style={styles.missionNumber}>{isCompleted ? '✓' : index + 1}</Text>
-                                </View>
-
-                                {/* Balão de informações da missão */}
-                                {selectedMissionId === mission.id && (
-                                    <View style={styles.missionInfo}>
-                                        <Text style={styles.missionTitle}>{mission.title}</Text>
-                                        {mission.id === '1' ? (
-                                            <TouchableOpacity onPress={handleFirstMissionAction}>
-                                                <Text style={styles.btnMission}>
-                                                    {isCompleted ? 'Concluída' : 'Começar +10 pontos'}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        ) : (
-                                            <TouchableOpacity>
-                                                <Text style={styles.btnMission}>
-                                                    Começar {mission.points}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        )}
-                                    </View>
-                                )}
-                            </TouchableOpacity>
-                        );
-                    })}
+                {/* Balão de informações da missão */}
+                {selectedMissionId === mission.id && (
+                  <View style={styles.missionInfo}>
+                    <Text style={styles.missionTitle}>{mission.title}</Text>
+                    {mission.id === '1' ? (
+                      <TouchableOpacity 
+                        disabled={isCompleted} 
+                        // Chama a ação simplificada (navegar)
+                        onPress={handleFirstMissionAction} 
+                      >
+                        <Text style={[styles.btnMission, isCompleted && styles.btnMissionCompleted]}>
+                          {isCompleted ? 'Concluída' : 'Começar +10 pontos'}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      // Outras missões
+                      <TouchableOpacity disabled={isCompleted}>
+                        <Text style={[styles.btnMission, isCompleted && styles.btnMissionCompleted]}>
+                          {isCompleted ? 'Concluída' : `Começar ${mission.points}`}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
           
           {/* Espaço extra no final para rolagem */}
           <View style={styles.bottomSpacer} />
@@ -118,6 +124,14 @@ return (
 }
 
 const styles = StyleSheet.create({
+  // ... Seus estilos permanecem inalterados
+  missionNodeCompleted: {
+    opacity: 0.5,
+  },
+  btnMissionCompleted: {
+    backgroundColor: '#aaa',
+    color: '#fff',
+  },
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',
@@ -144,10 +158,26 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#292a2b',
     marginBottom: 8,
+    textAlign: 'center',
+  },
+    greetingTextMentorh: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 15,
+    textAlign: 'center',
+    marginTop: -10,
+  },
+  greetingSectionMentorh:{
+    marginTop: -20,
+    paddingTop: 20,
+    backgroundColor: '#1a5d2b',
   },
   subtitleText: {
     fontSize: 18,
     color: '#292a2b',
+    textAlign: 'center',
+
   },
   missionsContainer: {
     position: 'relative',
