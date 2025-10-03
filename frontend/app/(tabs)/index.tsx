@@ -7,7 +7,7 @@ import { formatName } from "../../utils/formatName";
 
 // Os dados das missões permanecem os mesmos
 const MISSIONS = [
-  { id: '1', title: 'Preencha seu perfil', points: '+10 pontos', completed: false },
+  { id: 'profile', title: 'Preencha seu perfil', points: '+10 pontos', completed: false },
   { id: '2', title: 'Participe de um desafio', points: '+20 pontos', completed: false },
   { id: '3', title: 'Compre conteúdo', points: '+15 pontos', completed: false },
   { id: '4', title: 'Ganhe um super desconto', points: '+15 pontos', completed: false },
@@ -37,13 +37,11 @@ export default function HomeScreen() {
 
   // 3. FUNÇÃO QUE CHECA O STATUS NO CONTEXTO (QUE VEM DO BACKEND)
   const isMissionCompleted = (missionId: string) => {
-    if (missionId === '1') {
-        // Usa o campo correto do objeto user que vem do AuthContext/Backend
-        return user?.profileMissionCompleted === true; 
+    if (missionId === 'profile') {
+      return user?.missionsCompleted?.includes('profile') === true || user?.profileMissionCompleted === true;
     }
-    // Lógica futura para outras missões...
     return false;
-};
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -90,7 +88,7 @@ export default function HomeScreen() {
                 {selectedMissionId === mission.id && (
                   <View style={styles.missionInfo}>
                     <Text style={styles.missionTitle}>{mission.title}</Text>
-                    {mission.id === '1' ? (
+                    {mission.id === 'profile' ? (
                       <TouchableOpacity 
                         disabled={isCompleted} 
                         // Chama a ação simplificada (navegar)
@@ -126,7 +124,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   // ... Seus estilos permanecem inalterados
   missionNodeCompleted: {
-    opacity: 0.5,
+    opacity: 1,
   },
   btnMissionCompleted: {
     backgroundColor: '#aaa',

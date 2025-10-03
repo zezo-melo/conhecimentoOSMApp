@@ -59,8 +59,9 @@ exports.login = async (req, res) => {
 // Função para buscar os dados do perfil do usuário
 exports.getProfile = async (req, res) => {
   try {
-      // O ID do usuário vem do middleware de autenticação (req.userId)
-      const user = await User.findById(req.userId).select('-password'); // '-password' para não retornar a senha
+      // Compat: middleware expõe req.user.id e req.userId
+      const userId = req.user?.id || req.userId;
+      const user = await User.findById(userId).select('-password');
 
       if (!user) {
           return res.status(404).json({ message: 'Usuário não encontrado.' });
@@ -75,9 +76,9 @@ exports.getProfile = async (req, res) => {
 
 
 exports.updateProfile = async (req, res) => {
-    const userId = req.userId; 
+    const userId = req.user?.id || req.userId; 
     const updates = req.body; 
-    let pointsAwarded = false; // Flag de controle
+    let pointsAwarded = false;
 
     console.log('--- Iniciando atualização de perfil para userId:', userId, '---');
     console.log('Dados recebidos (updates):', updates);
@@ -93,14 +94,21 @@ exports.updateProfile = async (req, res) => {
         console.log('Status atual da missão:', user.profileMissionCompleted);
         console.log('Pontos atuais:', user.points);
 
-        // 1. LÓGICA DA MISSÃO: Conceder 10 pontos apenas na primeira vez
-        if (!user.profileMissionCompleted) {
+        // 1. LÓGICA DA MISSÃO (perfil): conceder 10 pontos só uma vez, idempotente
+        const profileCompletedBefore = Array.isArray(user.missionsCompleted) && user.missionsCompleted.includes('profile');
+
+        // Critério simples de perfil "preenchido": nome e telefone presentes após atualização
+        const finalName = updates.name ?? user.name;
+        const finalPhone = updates.phone ?? user.phone;
+        const isProfileFilled = Boolean(finalName) && Boolean(finalPhone);
+
+        if (isProfileFilled && !profileCompletedBefore) {
             user.points += 10;
-            user.profileMissionCompleted = true; 
+            user.missionsCompleted = Array.isArray(user.missionsCompleted) ? user.missionsCompleted : [];
+            user.missionsCompleted.push('profile');
+            user.profileMissionCompleted = true; // compat com frontend atual
             pointsAwarded = true;
-            console.log('MISSÃO COMPLETA! Adicionando 10 pontos. Novos pontos:', user.points);
-        } else {
-            console.log('Missão já foi completada. Não adicionando pontos.');
+            console.log('MISSÃO PERFIL COMPLETA! +10 pontos. Novos pontos:', user.points);
         }
         
         // 2. ATUALIZAÇÃO DOS DADOS DO PERFIL (Campos FLAT/ROOT e Sub-documentos)
@@ -130,7 +138,7 @@ exports.updateProfile = async (req, res) => {
         const updatedUser = user.toObject();
         delete updatedUser.password;
         
-        console.log('Retornando objeto atualizado para o frontend. Novos pontos:', updatedUser.points);
+        console.log('Retornando objeto atualizado para o frontend. Novos pontos:', updatedUser.points, 'PointsAwarded:', pointsAwarded);
 
         return res.status(200).json(updatedUser); 
 

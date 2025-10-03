@@ -5,31 +5,29 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-const JWT_SECRET = 'supercalifragilisticexpialidocious_12345'; 
-
 module.exports = (req, res, next) => {
-    // Pegar o token do cabeçalho da requisição
-    const authHeader = req.header('Authorization');
+    const authHeader = req.header('Authorization');
 
-    // Se não houver token, o acesso é negado
-    if (!authHeader) {
-        return res.status(401).json({ message: 'Acesso negado. Nenhum token fornecido.' });
-    }
-    
-    const token = authHeader.replace('Bearer ', '');
+    if (!authHeader) {
+        return res.status(401).json({ message: 'Acesso negado. Nenhum token fornecido.' });
+    }
+    
+    const token = authHeader.replace('Bearer ', '');
 
-    try {
-        // Verificar e decodificar o token
-        const decoded = jwt.verify(token, JWT_SECRET);
+    try {
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET) {
+            return res.status(500).json({ message: 'Configuração do servidor ausente: JWT_SECRET.' });
+        }
 
-        // Adicionar o objeto 'user' na requisição com o ID
-        // Isso garante que o req.user.id possa ser acessado na rota de perfil
-        req.user = { id: decoded.id };
-        
-        // Passar para o próximo middleware ou para a rota
-        next();
-    } catch (error) {
-        // Se o token for inválido, o acesso é negado
-        res.status(401).json({ message: 'Token inválido.' });
-    }
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        // Compat: expõe id tanto em req.user.id quanto em req.userId
+        req.user = { id: decoded.id };
+        req.userId = decoded.id;
+        
+        next();
+    } catch (error) {
+        res.status(401).json({ message: 'Token inválido.' });
+    }
 };

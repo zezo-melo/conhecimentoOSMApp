@@ -58,6 +58,10 @@ const UserSchema = new mongoose.Schema({
       type: String,
     },
   },
+  missionsCompleted: {
+    type: [String],
+    default: [],
+  },
   createdAt: { 
     type: Date,
     default: Date.now,

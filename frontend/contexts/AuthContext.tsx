@@ -27,7 +27,8 @@ interface User {
   level: number;
   xp: number;
   points: number;
-  missions: number;
+  missions?: number;
+  missionsCompleted?: string[];
   
   // NOVO CAMPO DA MISSÃO (Root do User, conforme User.js)
   profileMissionCompleted: boolean; 
