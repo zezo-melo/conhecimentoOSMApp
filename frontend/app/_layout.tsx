@@ -100,12 +100,17 @@ function AppRoutes() {
         }}
       />
       <Drawer.Screen
-        name="imagetest"
+        name="editProfile"
         options={{
-          drawerLabel: 'Teste Imagem',
+          drawerLabel: 'Editar Perfil',
         }}
       />
-
+      <Drawer.Screen 
+        name="quiz"
+        options={{
+          drawerLabel: 'Quiz',
+        }}
+      />
       
     </Drawer>
   );

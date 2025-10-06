@@ -8,7 +8,7 @@ export default function BackButton() {
 
   return (
     <TouchableOpacity 
-      onPress={() => navigation.navigate("shop")} 
+      onPress={() => navigation.goBack()} 
       style={{ paddingBottom: 10 }}
     >
       <Ionicons name="arrow-back" size={24} color="#4a7f37" />

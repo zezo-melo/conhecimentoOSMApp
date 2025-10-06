@@ -39,3 +39,35 @@ router.post('/complete-first-mission', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+ 
+// Nova rota: completar missão do quiz (Missão 2)
+router.post('/complete-quiz-mission', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const missionId = 'quiz2';
+    const missionPoints = 20;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    // Já completou a missão 2?
+    if (user.missionsCompleted && user.missionsCompleted.includes(missionId)) {
+      return res.status(400).json({ message: 'Esta missão já foi completada.' });
+    }
+
+    user.points += missionPoints;
+    user.missionsCompleted = Array.isArray(user.missionsCompleted) ? user.missionsCompleted : [];
+    user.missionsCompleted.push(missionId);
+    await user.save();
+
+    return res.json({
+      message: 'Missão 2 concluída! Você ganhou ' + missionPoints + ' pontos.',
+      user,
+    });
+  } catch (error) {
+    console.error('Erro ao completar missão 2:', error);
+    return res.status(500).json({ message: 'Erro do servidor.' });
+  }
+});

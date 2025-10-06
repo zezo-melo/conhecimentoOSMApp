@@ -71,6 +71,7 @@ interface AuthContextData {
   // CORRIGIDO: Agora aceita Partial<User> (campos planos)
   updateProfile: (data: Partial<User>) => Promise<void>; 
   // completeMission removido do tipo
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -104,6 +105,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const refreshProfile = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/profile`);
+      setUser(response.data);
+    } catch (error) {
+      console.log('Erro ao atualizar perfil do usuário:', (error as any).response?.data || (error as any).message);
     }
   };
 
@@ -178,6 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         signOut,
         updateProfile,
+      refreshProfile,
       }}
     >
       {children}

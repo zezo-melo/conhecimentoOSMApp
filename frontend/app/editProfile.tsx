@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Header from '@/components/Header';
+import BackButton from '@/components/BackButton';
 
 export default function UpdateProfileScreen() {
   const { user, updateProfile, isLoading } = useAuth();
@@ -95,6 +96,7 @@ export default function UpdateProfileScreen() {
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.content}>
+          <BackButton />
             <View style={styles.header}>
               <Text style={styles.title}>Atualizar Perfil</Text>
               <Text style={styles.subtitle}>Altere as suas informações da conta</Text>

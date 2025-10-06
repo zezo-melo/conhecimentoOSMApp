@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView, Dimensions, SafeAreaView, Linking, TouchableOpacity } from "react-native";
 import { LineChart, PieChart } from "react-native-chart-kit";
 import Header from '@/components/Header';
+import BackButton from '@/components/BackButton';
 
 
 export default function ComissoesScreen() {
@@ -16,6 +17,7 @@ export default function ComissoesScreen() {
 
       <Header />
     <ScrollView style={styles.container}>
+      <BackButton />
 
       {/* Header */}
       <Text style={styles.title}>Comissões Itaú</Text>

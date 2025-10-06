@@ -35,10 +35,17 @@ export default function HomeScreen() {
     router.push('/editProfile');
   };
 
+  const handleSecondMissionAction = () => {
+    router.push('/quiz' as any);
+  };
+
   // 3. FUNÇÃO QUE CHECA O STATUS NO CONTEXTO (QUE VEM DO BACKEND)
   const isMissionCompleted = (missionId: string) => {
     if (missionId === 'profile') {
       return user?.missionsCompleted?.includes('profile') === true || user?.profileMissionCompleted === true;
+    }
+    if (missionId === '2') {
+      return user?.missionsCompleted?.includes('quiz2') === true;
     }
     return false;
   };
@@ -96,6 +103,15 @@ export default function HomeScreen() {
                       >
                         <Text style={[styles.btnMission, isCompleted && styles.btnMissionCompleted]}>
                           {isCompleted ? 'Concluída' : 'Começar +10 pontos'}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : mission.id === '2' ? (
+                      <TouchableOpacity 
+                        disabled={isCompleted}
+                        onPress={handleSecondMissionAction}
+                      >
+                        <Text style={[styles.btnMission, isCompleted && styles.btnMissionCompleted]}>
+                          {isCompleted ? 'Concluída' : 'Começar +20 pontos'}
                         </Text>
                       </TouchableOpacity>
                     ) : (
