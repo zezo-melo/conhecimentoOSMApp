@@ -2,6 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cors = require('cors');
 
 dotenv.config();
 
@@ -9,6 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || '*',
+  credentials: true,
+}));
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/app_beneficios';
 
@@ -30,6 +35,7 @@ app.get('/', (req, res) => {
   res.send('Servidor de autenticação funcionando!');
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`Servidor rodando em http://${HOST}:${PORT}`);
 });

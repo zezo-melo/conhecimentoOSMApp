@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Stack } from 'expo-router';
 import { router } from "expo-router";
 import { formatName } from "../../utils/formatName";
+import { API_URL } from '../../constants';
 
 
 const MENU_OPTIONS = [
@@ -40,13 +41,13 @@ export default function ProfileScreen() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
+      const token = await AsyncStorage.getItem('@AppBeneficios:token');
       console.log("TOKEN RECUPERADO:", token);
       if (!token) {
         throw new Error('No token found');
       }
 
-      const response = await fetch('http://localhost:3000/api/profile', {
+      const response = await fetch(`${API_URL}/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -122,11 +123,11 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Pontos</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{user?.completedMissions || 0}</Text>
+            <Text style={styles.statValue}>{(user?.missions as any) || user?.missionsCompleted?.length || 0}</Text>
             <Text style={styles.statLabel}>Missões</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statValue}>{user?.rank || 'N/A'}</Text>
+            <Text style={styles.statValue}>{user?.level || 'N/A'}</Text>
             <Text style={styles.statLabel}>Ranking</Text>
           </View>
         </View>

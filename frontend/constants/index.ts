@@ -7,11 +7,18 @@ export const API_CONFIG = {
   localNetwork: 'http://192.168.1.15:3000/api',
   // Para o seu backend hospedado no Vercel
   vercel: 'https://seu-backend-incrivel.vercel.app/api',
+  // Para usar com tunnel do Expo (funciona em qualquer rede)
+  tunnel: 'https://seu-backend-incrivel.vercel.app/api',
 };
 
 // A URL base que aponta para o seu backend.
 // Mude para 'localNetwork' para testar no seu celular físico.
 // Mude para 'vercel' para a versão de produção.
 
-// export const API_URL = API_CONFIG.localNetwork;
-export const API_URL = API_CONFIG.emulator;
+// Para dispositivos físicos, use localNetwork
+// Para emulador, use emulator
+export const API_URL = API_CONFIG.localNetwork;
+// Permite configurar por variável de ambiente do Expo (EXPO_PUBLIC_API_URL)
+// Fallback para os perfis acima, útil em desenvolvimento
+// export const API_URL =
+//   (process.env.EXPO_PUBLIC_API_URL as string | undefined) || API_CONFIG.emulator;

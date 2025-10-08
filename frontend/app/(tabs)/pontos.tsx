@@ -3,6 +3,8 @@ import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } fr
 import Header from '../../components/Header';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '../../contexts/AuthContext';
+import { API_URL } from '../../constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 
@@ -101,13 +103,13 @@ export default function PontosScreen() {
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
+      const token = await AsyncStorage.getItem('@AppBeneficios:token');
       console.log("TOKEN RECUPERADO:", token);
       if (!token) {
         throw new Error('No token found');
       }
 
-      const response = await fetch('http://localhost:3000/api/profile', {
+      const response = await fetch(`${API_URL}/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

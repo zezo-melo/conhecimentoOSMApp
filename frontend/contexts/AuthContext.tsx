@@ -29,6 +29,9 @@ interface User {
   points: number;
   missions?: number;
   missionsCompleted?: string[];
+  // Campos usados nas telas
+  completedMissions?: number;
+  rank?: string | number;
   
   // NOVO CAMPO DA MISSÃO (Root do User, conforme User.js)
   profileMissionCompleted: boolean; 
