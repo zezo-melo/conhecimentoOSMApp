@@ -1,24 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { Alert } from 'react-native';
-import { API_URL } from '../constants'; // Importa a URL do novo ficheiro
+import { Alert, Platform } from 'react-native';
+import { API_URL, IOS_CONFIG } from '../constants';
 
-// Simulação de AsyncStorage para o ambiente do Canvas
-const asyncStorage = {
-  data: {},
-  getItem: async (key: string) => asyncStorage.data[key] || null, // Adicionado tipo 'key'
-  setItem: async (key: string, value: any) => { asyncStorage.data[key] = value; }, // Adicionado tipos
-  removeItem: async (key: string) => { delete asyncStorage.data[key]; }, // Adicionado tipo 'key'
-};
-
-// Simulação de Alert para o ambiente do Canvas
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const CanvasAlert = {
-  alert: (title: string, message: string) => { // Adicionado tipos
-    console.log(`ALERTA: ${title}\n${message}`);
-  }
-};
+// --- SIMULAÇÃO REMOVIDA AQUI ---
 
 interface User {
   id: string;
@@ -32,17 +18,17 @@ interface User {
   // Campos usados nas telas
   completedMissions?: number;
   rank?: string | number;
-  
+
   // NOVO CAMPO DA MISSÃO (Root do User, conforme User.js)
-  profileMissionCompleted: boolean; 
+  profileMissionCompleted: boolean;
 
   // CAMPOS DE PERFIL (Root do User, conforme User.js)
   dob: string;
   docType: string;
   document: string;
-  phone: string; 
+  phone: string;
   bio?: string;
-  
+
   // CAMPO DE ENDEREÇO (Sub-documento no User.js)
   address?: {
     street?: string;
@@ -50,8 +36,6 @@ interface User {
     state?: string;
     // Se seu User.js tiver zipCode, adicione aqui
   };
-
-  // O OBJETO 'profile' aninhado foi REMOVIDO para eliminar a tipagem conflitante
 }
 
 interface UserRegistrationData {
@@ -71,9 +55,7 @@ interface AuthContextData {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (data: UserRegistrationData) => Promise<void>;
   signOut: () => Promise<void>;
-  // CORRIGIDO: Agora aceita Partial<User> (campos planos)
-  updateProfile: (data: Partial<User>) => Promise<void>; 
-  // completeMission removido do tipo
+  updateProfile: (data: Partial<User>) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -91,22 +73,88 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Configurar axios para iOS
+  useEffect(() => {
+    console.log('⚙️ [AuthContext] Configurando axios para plataforma:', Platform.OS);
+    
+    if (Platform.OS === 'ios') {
+      console.log('🍎 [AuthContext] Configurando para iOS...');
+      axios.defaults.timeout = IOS_CONFIG.timeout;
+      axios.defaults.headers.common = {
+        ...axios.defaults.headers.common,
+        ...IOS_CONFIG.headers
+      };
+      console.log('✅ [AuthContext] Configuração iOS aplicada');
+    }
+    
+    // Testar AsyncStorage no iOS
+    if (Platform.OS === 'ios') {
+      testAsyncStorage();
+    }
+  }, []);
+
+  const testAsyncStorage = async () => {
+    try {
+      console.log('🧪 [AuthContext] Testando AsyncStorage no iOS...');
+      await AsyncStorage.setItem('@AppBeneficios:test', 'test-value');
+      const testValue = await AsyncStorage.getItem('@AppBeneficios:test');
+      console.log('✅ [AuthContext] AsyncStorage funcionando:', testValue === 'test-value' ? 'SIM' : 'NÃO');
+      await AsyncStorage.removeItem('@AppBeneficios:test');
+    } catch (error) {
+      console.log('❌ [AuthContext] Erro no AsyncStorage:', error);
+    }
+  };
+
   useEffect(() => {
     loadStoredUser();
   }, []);
 
   const loadStoredUser = async () => {
     try {
-      const storedToken = await asyncStorage.getItem('@AppBeneficios:token');
+      console.log('🔍 [AuthContext] Iniciando carregamento do usuário...');
+      
+      // Usando o AsyncStorage real importado
+      const storedToken = await AsyncStorage.getItem('@AppBeneficios:token'); 
+      console.log('🔑 [AuthContext] Token encontrado:', storedToken ? 'SIM' : 'NÃO');
+      
       if (storedToken) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        const response = await axios.get(`${API_URL}/profile`);
+        
+        // Configuração específica para iOS
+        const config = Platform.OS === 'ios' ? {
+          timeout: IOS_CONFIG.timeout,
+          headers: IOS_CONFIG.headers
+        } : {};
+        
+        console.log('🌐 [AuthContext] Fazendo requisição para:', `${API_URL}/profile`);
+        console.log('📱 [AuthContext] Plataforma:', Platform.OS);
+        
+        const response = await axios.get(`${API_URL}/profile`, config);
+        console.log('✅ [AuthContext] Usuário carregado com sucesso:', response.data?.name || 'Sem nome');
         setUser(response.data);
+      } else {
+        console.log('❌ [AuthContext] Nenhum token encontrado, usuário não autenticado');
+        setUser(null);
       }
     } catch (error: any) {
-      console.log('Erro ao carregar usuário:', (error as any).response?.data || (error as any).message);
+      console.log('❌ [AuthContext] Erro ao carregar usuário:', (error as any).response?.data || (error as any).message);
+      console.log('🔍 [AuthContext] Detalhes do erro:', {
+        code: error.code,
+        message: error.message,
+        response: error.response?.status,
+        platform: Platform.OS
+      });
+      
+      // Se for erro de rede no iOS, limpar token e tentar novamente
+      if (Platform.OS === 'ios' && (error.code === 'NETWORK_ERROR' || error.message?.includes('Network Error'))) {
+        console.log('🧹 [AuthContext] Erro de rede no iOS, limpando token...');
+        await AsyncStorage.removeItem('@AppBeneficios:token');
+        delete axios.defaults.headers.common['Authorization'];
+      }
+      
       setUser(null);
     } finally {
+      console.log('🏁 [AuthContext] Finalizando carregamento, isLoading = false');
       setIsLoading(false);
     }
   };
@@ -121,19 +169,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
+    console.log('🔐 [AuthContext] Iniciando login...');
     setIsLoading(true);
     try {
+      console.log('📧 [AuthContext] Email:', email);
+      console.log('🌐 [AuthContext] URL de login:', `${API_URL}/auth/login`);
+      console.log('📱 [AuthContext] Plataforma:', Platform.OS);
+      
       const response = await axios.post(`${API_URL}/auth/login`, { email, password });
+      console.log('✅ [AuthContext] Login bem-sucedido, token recebido');
+      
       const { token } = response.data;
-      await asyncStorage.setItem('@AppBeneficios:token', token);
+      
+      // Usando o AsyncStorage real importado
+      console.log('💾 [AuthContext] Salvando token no AsyncStorage...');
+      await AsyncStorage.setItem('@AppBeneficios:token', token); 
+      
+      // Verificar se o token foi salvo
+      const savedToken = await AsyncStorage.getItem('@AppBeneficios:token');
+      console.log('🔍 [AuthContext] Token salvo com sucesso:', savedToken ? 'SIM' : 'NÃO');
+      
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      console.log('👤 [AuthContext] Buscando perfil do usuário...');
       const profileResponse = await axios.get(`${API_URL}/profile`);
+      console.log('✅ [AuthContext] Perfil carregado:', profileResponse.data?.name || 'Sem nome');
+      
       setUser(profileResponse.data);
       Alert.alert('Sucesso', 'Login realizado com sucesso!');
     } catch (error: any) {
-      console.error('Erro no login:', error.response?.data || error.message);
+      console.error('❌ [AuthContext] Erro no login:', error.response?.data || error.message);
+      console.log('🔍 [AuthContext] Detalhes do erro de login:', {
+        code: error.code,
+        message: error.message,
+        response: error.response?.status,
+        platform: Platform.OS
+      });
       throw new Error('Falha na autenticação. Verifique seu email e senha.');
     } finally {
+      console.log('🏁 [AuthContext] Finalizando login, isLoading = false');
       setIsLoading(false);
     }
   };
@@ -141,7 +215,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setUser(null);
-      await asyncStorage.removeItem('@AppBeneficios:token');
+      // Usando o AsyncStorage real importado
+      await AsyncStorage.removeItem('@AppBeneficios:token'); 
       delete axios.defaults.headers.common['Authorization'];
     } catch (error) {
       console.log('Erro no logout:', error);
@@ -161,12 +236,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // CORRIGIDO: Agora espera Partial<User> (campos planos)
-  const updateProfile = async (profileData: Partial<User>) => { 
+  const updateProfile = async (profileData: Partial<User>) => {
     setIsLoading(true);
     try {
-      // O profileData agora contém campos planos (phone, bio, etc.) e o backend espera isso.
-      const response = await axios.put(`${API_URL}/profile`, profileData); 
+      const response = await axios.put(`${API_URL}/profile`, profileData);
       const updatedUser = response.data;
       setUser(updatedUser);
       Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
@@ -191,7 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signUp,
         signOut,
         updateProfile,
-      refreshProfile,
+        refreshProfile,
       }}
     >
       {children}
