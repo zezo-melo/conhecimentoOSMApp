@@ -45,7 +45,7 @@ router.post('/complete-quiz-mission', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
     const missionId = 'quiz2';
-    const missionPoints = 20;
+    const { correctCount } = req.body || {};
 
     const user = await User.findById(userId);
     if (!user) {
@@ -56,6 +56,9 @@ router.post('/complete-quiz-mission', authMiddleware, async (req, res) => {
     if (user.missionsCompleted && user.missionsCompleted.includes(missionId)) {
       return res.status(400).json({ message: 'Esta missão já foi completada.' });
     }
+
+    const safeCorrectCount = Number.isFinite(correctCount) ? Math.max(0, Math.min(10, Number(correctCount))) : 0;
+    const missionPoints = Math.min(20, safeCorrectCount * 2);
 
     user.points += missionPoints;
     user.missionsCompleted = Array.isArray(user.missionsCompleted) ? user.missionsCompleted : [];

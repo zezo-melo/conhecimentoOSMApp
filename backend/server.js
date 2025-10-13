@@ -25,11 +25,13 @@ mongoose.connect(mongoUri)
 const authRoutes = require('./src/routes/auth.js');
 const profileRoutes = require('./src/routes/profile.js'); 
 const missionsRoutes = require('./src/routes/missions.js'); // Importe a nova rota
+const leaderboardRoutes = require('./src/routes/leaderboard.js');
 
 // Adiciona as rotas ao seu aplicativo
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/missions', missionsRoutes); // Adicione esta linha crucial aqui
+app.use('/api/leaderboard', leaderboardRoutes);
 
 app.get('/', (req, res) => {
   res.send('Servidor de autenticação funcionando!');

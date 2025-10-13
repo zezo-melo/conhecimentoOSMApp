@@ -28,6 +28,7 @@ interface User {
   document: string;
   phone: string;
   bio?: string;
+  photoUrl?: string;
 
   // CAMPO DE ENDEREÇO (Sub-documento no User.js)
   address?: {

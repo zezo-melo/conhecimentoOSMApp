@@ -77,6 +77,7 @@ export default function QuizMission() {
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [correctCount, setCorrectCount] = useState(0);
   const router = useRouter();
   const { refreshProfile } = useAuth();
 
@@ -89,15 +90,21 @@ export default function QuizMission() {
   };
 
   const nextOrFinish = async () => {
-    if (feedback !== 'correct') return;
+    // Só permite avançar após verificar, independentemente de certo/errado
+    if (feedback === null) return;
+    const isAnswerCorrect = feedback === 'correct';
     if (!isLast) {
+      if (isAnswerCorrect) {
+        setCorrectCount((c) => c + 1);
+      }
       setSelected(null);
       setFeedback(null);
       setCurrent((c) => c + 1);
       return;
     }
     // Finalizar: creditar pontos e bloquear missão
-    await axios.post(`${API_URL}/missions/complete-quiz-mission`);
+    const finalCorrect = isAnswerCorrect ? correctCount + 1 : correctCount;
+    await axios.post(`${API_URL}/missions/complete-quiz-mission`, { correctCount: finalCorrect });
     await refreshProfile();
     router.back();
   };
@@ -118,7 +125,7 @@ export default function QuizMission() {
             <TouchableOpacity
               key={opt.key}
               style={[styles.option, selected === opt.key && styles.optionSelected]}
-              onPress={() => setSelected(opt.key)}
+              onPress={() => { if (feedback === null) setSelected(opt.key); }}
             >
               <Text style={styles.optionText}>{opt.key}) {opt.text}</Text>
             </TouchableOpacity>
@@ -131,17 +138,26 @@ export default function QuizMission() {
           {feedback && (
             <View style={[styles.feedback, feedback === 'correct' ? styles.correct : styles.wrong]}>
               <Text style={styles.feedbackText}>
-                {feedback === 'correct' ? 'Acertou! 🎉' : 'Errou. Tente novamente.'}
+                {feedback === 'correct' ? 'Acertou! 🎉' : 'Errou 🥲 Ir para a próxima questão.'}
               </Text>
             </View>
           )}
 
           <TouchableOpacity
-            disabled={feedback !== 'correct'}
-            style={[styles.nextButton, feedback !== 'correct' && styles.nextButtonDisabled]}
+            disabled={feedback === null}
+            style={[styles.nextButton, feedback === null && styles.nextButtonDisabled]}
             onPress={nextOrFinish}
           >
-            <Text style={styles.nextText}>{isLast ? 'Finalizar (+20 pontos)' : 'Próxima'}</Text>
+            <Text style={styles.nextText}>
+              {isLast
+                ? (() => {
+                    const pendingCorrect = feedback === 'correct' ? 1 : 0;
+                    const totalCorrect = correctCount + pendingCorrect;
+                    const awarded = Math.min(20, Math.max(0, totalCorrect * 2));
+                    return `Finalizar (+${awarded} pontos)`;
+                  })()
+                : 'Próxima'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -47,6 +47,9 @@ const UserSchema = new mongoose.Schema({
   bio: {
     type: String,
   },
+  photoUrl: {
+    type: String,
+  },
   address: {
     street: {
       type: String,
@@ -55,6 +58,9 @@ const UserSchema = new mongoose.Schema({
       type: String,
     },
     state: {
+      type: String,
+    },
+    zipCode: {
       type: String,
     },
   },

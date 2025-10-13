@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
@@ -101,9 +101,13 @@ export default function ProfileScreen() {
         <View style={styles.headerSection}>
           {/* Avatar */}
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{formatName(user?.name?.charAt(0)) || '?'}</Text>
-            </View>
+            { (profile?.photoUrl || user?.photoUrl) ? (
+              <Image source={{ uri: (profile?.photoUrl || user?.photoUrl) as string }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{formatName(user?.name?.charAt(0)) || '?'}</Text>
+              </View>
+            ) }
             <View style={styles.levelBadge}>
               <Text style={styles.levelBadgeText}>{user?.level || 'N/A'}</Text>
             </View>
@@ -197,6 +201,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#4a7f37',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#eee',
   },
   avatarText: {
     color: '#fff',

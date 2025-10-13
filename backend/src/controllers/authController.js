@@ -119,14 +119,19 @@ exports.updateProfile = async (req, res) => {
         if (updates.document) user.document = updates.document;
         if (updates.phone) user.phone = updates.phone;
         if (updates.bio) user.bio = updates.bio;
+        if (updates.photoUrl) user.photoUrl = updates.photoUrl;
         
         // Atualiza campos de ENDEREÇO (Sub-documento 'address')
         if (updates.address) {
-            Object.assign(user.address, updates.address);
+            user.address = {
+                ...user.address,
+                ...updates.address,
+            };
         }
-        // Se a tela de edição envia city, state, etc. como campos de ROOT (e não dentro de 'address'):
+        // Se a tela de edição envia city, state, zipCode etc. como campos de ROOT (e não dentro de 'address'):
         if (updates.city) user.address.city = updates.city;
         if (updates.state) user.address.state = updates.state; 
+        if (updates.zipCode) user.address.zipCode = updates.zipCode;
         // Se a tela de edição tem o campo CEP, você precisa ter ele no User.js ou mapear ele aqui
         if (updates.zipCode && user.address) user.address.zipCode = updates.zipCode; 
         
