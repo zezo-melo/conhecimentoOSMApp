@@ -15,9 +15,16 @@ export const API_CONFIG = {
 
 // Configuração automática baseada na plataforma
 const getApiUrl = () => {
-  // Se estiver em desenvolvimento e for iOS, use tunnel para evitar problemas de rede
+  // 1) Permite override via variável de ambiente do Expo (app.config, eas, etc)
+  // @ts-ignore - process.env pode não estar tipado aqui
+  const envUrl = process?.env?.EXPO_PUBLIC_API_URL || process?.env?.API_URL;
+  if (envUrl && typeof envUrl === 'string') {
+    return envUrl;
+  }
+
+  // Em desenvolvimento no iOS, prefira a rede local (o Expo permite HTTP para LAN)
   if (__DEV__ && Platform.OS === 'ios') {
-    return API_CONFIG.tunnel;
+    return API_CONFIG.localNetwork;
   }
   
   // Para dispositivos físicos, use localNetwork
