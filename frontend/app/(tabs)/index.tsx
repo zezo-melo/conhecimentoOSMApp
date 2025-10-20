@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     marginLeft: 70, 
     marginTop: 70,
     marginRight: 60,
-    zIndex: 5,
+    zIndex: 15,
   },
   missionTitle: {
     fontSize: 18,
