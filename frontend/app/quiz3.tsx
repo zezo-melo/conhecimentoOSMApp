@@ -148,7 +148,7 @@ export default function QuizMission3() {
       <QuizIntro
         title={missionData.title}
         description={missionData.description}
-        videoUrl={missionData.videoUrl || 'https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4'}
+        videoUrl={missionData.videoUrl}
         onStart={handleStartQuiz}
         onBack={() => router.back()}
       />

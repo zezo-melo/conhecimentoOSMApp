@@ -125,9 +125,9 @@ const MISSION_DATA = {
   },
   quiz3: {
     id: 'quiz3',
-    title: 'Desafio de Conhecimento - Vídeo',
+    title: 'Desafio de Conhecimento',
     description: 'Assista ao vídeo e responda as perguntas baseadas no conteúdo',
-    videoUrl: 'https://www.youtube.com/watch?v=u31qwQUeGuM', // Substitua pelo ID real do vídeo
+    videoUrl: 'u31qwQUeGuM', // Substitua pelo ID real do vídeo
     questions: [
       {
         id: 1,
@@ -155,9 +155,9 @@ const MISSION_DATA = {
   },
   quiz4: {
     id: 'quiz4',
-    title: 'Desafio de Conhecimento - Vídeo 2',
+    title: 'Desafio de Conhecimento',
     description: 'Assista ao vídeo e responda as perguntas baseadas no conteúdo',
-    videoUrl: 'https://www.youtube.com/watch?v=u31qwQUeGuM', // Substitua pelo ID real do vídeo
+    videoUrl: 'u31qwQUeGuM', // ID do vídeo do YouTuber
     questions: [
       {
         id: 1,
