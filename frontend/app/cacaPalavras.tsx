@@ -9,7 +9,7 @@ import BackButton from '@/components/BackButton';
 import { Ionicons } from '@expo/vector-icons';
 
 const WORDS = ['OSM', 'MENTORH', 'ADAPTATIVA', 'CAFE', 'EQUIPE', 'CHAMADO'];
-const GRID_SIZE = 14;
+const GRID_SIZE = 12;
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 type Cell = {
@@ -44,23 +44,20 @@ const generateFixedGrid = (): { grid: Cell[][]; placements: WordPlacement[] } =>
       const c = direction === 'horizontal' ? startC + i : startC;
 
       if (r < GRID_SIZE && c < GRID_SIZE) {
-        // Só substitui se ainda não houver letra da própria palavra
-        if (grid[r][c].letter === LETTERS[Math.floor(Math.random() * LETTERS.length)] || coords.length === 0) {
-          grid[r][c].letter = word[i];
-        }
+        grid[r][c].letter = word[i];
         coords.push({ row: r, col: c });
       }
     }
     placements.push({ word, coords });
   };
 
-  // 🔸 Posições cuidadosamente escolhidas para evitar colisões
-  placeWord('OSM', 0, 0, 'horizontal');           // Linha 0
-  placeWord('MENTORH', 2, 1, 'horizontal');       // Linha 2, deslocada pra direita
+  // 🔸 Posicionamentos fixos revisados (sem sobreposição)
+  placeWord('MENTORH', 2, 1, 'horizontal');       // Linha 2
   placeWord('ADAPTATIVA', 4, 2, 'horizontal');    // Linha 4
-  placeWord('CAFE', 0, 10, 'vertical');           // Coluna 10 (não colide)
-  placeWord('EQUIPE', 5, 12, 'vertical');         // Coluna 12
-  placeWord('CHAMADO', 8, 3, 'horizontal');       // Linha 8
+  placeWord('CAFE', 0, 10, 'vertical');           // Vertical segura
+  placeWord('EQUIPE', 6, 11, 'vertical');         // Vertical segura
+  placeWord('CHAMADO', 8, 3, 'horizontal');       // Linha 8 (não sobrepõe)
+  placeWord('OSM', 10, 5, 'horizontal');          // Linha 10 (nova posição, mais central)
 
   return { grid, placements };
 };

@@ -396,7 +396,7 @@ router.post('/complete-quiz-mission-4', authMiddleware, async (req, res) => {
 router.post('/complete-word-search', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const missionId = '13'; // ID da missão 'Caça Palavras da Empresa'
+    const missionId = 'mission5'; // ID da missão 'Caça Palavras da Empresa'
     const { timeSpent } = req.body || {}; // O frontend envia apenas o tempo gasto
     
     const user = await User.findById(userId);

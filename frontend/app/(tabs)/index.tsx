@@ -213,7 +213,11 @@ export default function HomeScreen() {
               let requiredMissions = ['profile', 'quiz2'];
               if (item.id === 'chest_2') {
                 // Aumentando o número de missões requeridas para o segundo baú
-                requiredMissions = ['profile', 'quiz2', 'quiz3', 'quiz4', '13']; // Adicionei '13' (Caça Palavras)
+                requiredMissions = ['profile', 'quiz2', 'quiz3', 'quiz4',];
+              } 
+              if (item.id === 'chest_3') {
+                // Aumentando o número de missões requeridas para o segundo baú
+                requiredMissions = ['profile', 'quiz2', 'quiz3', 'quiz4', 'mission5'];
               }
               
               return (
