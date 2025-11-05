@@ -13,7 +13,7 @@ type Mission = {
   title: string;
   points: string;
   // screen agora aceita 'cacaPalavras'
-  screen?: 'editProfile' | 'quiz' | 'quiz3' | 'quiz4' | 'cacaPalavras' | string;
+  screen?: 'editProfile' | 'quiz' | 'quiz3' | 'quiz4' | 'cacaPalavras' | 'quiz6' | string;
 };
 
 type Item = Mission | { id: string; type: 'chest'; points: number; opened: boolean };
@@ -22,12 +22,12 @@ type Item = Mission | { id: string; type: 'chest'; points: number; opened: boole
 const ORIGINAL_MISSIONS: Mission[] = [
   { id: 'profile', title: 'Preencha seu perfil', points: '+10 pontos', screen: 'editProfile' },
   { id: '2', title: 'Participe de um desafio', points: '+20 pontos', screen: 'quiz' },
-  { id: '3', title: 'Desafio com Vídeo 1', points: '+15 pontos', screen: 'quiz3' },
-  { id: '4', title: 'Desafio com Vídeo 2', points: '+15 pontos', screen: 'quiz4' },
-  { id: '13', title: 'Caça Palavras da Empresa', points: '+15 pontos', screen: 'cacaPalavras' }, // << NOVA MISSÃO
-  { id: '5', title: 'Compre conteúdo', points: '+15 pontos' },
-  { id: '6', title: 'Ganhe um super desconto', points: '+15 pontos' },
-  { id: '7', title: 'Revise o conteúdo da semana', points: '+5 pontos' },
+  { id: '3', title: 'Desafio - Vídeo', points: '+15 pontos', screen: 'quiz3' },
+  { id: 'cacaPalavras', title: 'Caça Palavras OSM', points: '+15 pontos', screen: 'cacaPalavras' },
+  { id: '4', title: 'Desafio - Vídeo', points: '+15 pontos', screen: 'quiz4' },
+  { id: '6', title: 'Verdadeiro ou falso?', points: '+15 pontos', screen: 'quiz6' },
+  { id: '5', title: 'Participe de um desafio', points: '+15 pontos', screen: 'quiz5' },
+  { id: '7', title: 'Verdadeiro ou falso?', points: '+5 pontos', screen: 'quiz7' },
   { id: '8', title: 'Convide um amigo', points: '+25 pontos' },
   { id: '9', title: 'Complete 3 missões', points: '+30 pontos' },
   { id: '10', title: 'Faça login por 7 dias', points: '+50 pontos' },
@@ -97,9 +97,17 @@ export default function HomeScreen() {
     if (missionId === '4') {
       return user?.missionsCompleted?.includes('quiz4') === true;
     }
-    if (missionId === '13') {
-        // A missão 13 (Caça Palavras) usa o ID '13' no backend.
-        return user?.missionsCompleted?.includes('13') === true;
+    if (missionId === 'cacaPalavras') {
+        return user?.missionsCompleted?.includes('cacaPalavras') === true;
+    }
+    if (missionId === '5') {
+      return user?.missionsCompleted?.includes('quiz5') === true;
+    }
+    if (missionId === '6') {
+      return user?.missionsCompleted?.includes('quiz6') === true;
+    }
+    if (missionId === '7') {
+      return user?.missionsCompleted?.includes('quiz7') === true;
     }
     return false;
   };
@@ -124,6 +132,12 @@ export default function HomeScreen() {
       router.push('/quiz4' as any);
     } else if (mission.screen === 'cacaPalavras') { // << ROTA DO CAÇA PALAVRAS
       router.push('/cacaPalavras' as any);
+    } else if (mission.screen === 'quiz5') {
+      router.push('/quiz5' as any);
+    } else if (mission.screen === 'quiz6') {
+      router.push('/quiz6' as any);
+    } else if (mission.screen === 'quiz7') {
+      router.push('/quiz7' as any);
     } else {
       alert(`Iniciando missão: ${mission.title}`);
     }
@@ -217,9 +231,9 @@ export default function HomeScreen() {
               } 
               if (item.id === 'chest_3') {
                 // Aumentando o número de missões requeridas para o segundo baú
-                requiredMissions = ['profile', 'quiz2', 'quiz3', 'quiz4', 'mission5'];
+                requiredMissions = ['profile', 'quiz2', 'quiz3', 'quiz4', 'cacaPalavras'];
               }
-              
+                          
               return (
                 <BonusChest 
                     key={item.id} 

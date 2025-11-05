@@ -222,7 +222,7 @@ export default function CacaPalavrasScreen() {
         <View style={styles.backBtnContainer}>
           <BackButton />
         </View>
-        <Text style={styles.heading}>Caça Palavras da Empresa</Text>
+        <Text style={styles.heading}>Caça Palavras OSM</Text>
         <Text style={styles.subtitle}>Encontre os termos abaixo na grade.</Text>
 
         <View style={styles.statusContainer}>

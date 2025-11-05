@@ -123,6 +123,7 @@ const MISSION_DATA = {
       }
     ]
   },
+
   quiz3: {
     id: 'quiz3',
     title: 'Desafio de Conhecimento',
@@ -153,6 +154,7 @@ const MISSION_DATA = {
       }
     ]
   },
+
   quiz4: {
     id: 'quiz4',
     title: 'Desafio de Conhecimento',
@@ -182,7 +184,172 @@ const MISSION_DATA = {
         correct: 'B'
       }
     ]
-  }
+  },
+
+  quiz5: {
+    id: 'quiz5',
+    title: 'Missão 6: Desafio de Processos',
+    description: 'Teste seus conhecimentos sobre os processos e fluxos de atendimento internos.',
+    questions: [
+      {
+        id: 1,
+        title: 'De acordo com o fluxo, quem realiza a triagem inicial dos chamados?',
+        options: [
+          { key: 'A', text: 'N2' },
+          { key: 'B', text: 'Cliente' },
+          { key: 'C', text: 'N1' },
+          { key: 'D', text: 'Desenvolvimento' },
+        ],
+        correct: 'C'
+      },
+      {
+        id: 2,
+        title: 'Qual deve ser a classificação correta da severidade em uma manutenção corretiva?',
+        options: [
+          { key: 'A', text: 'Normal ou planejada' },
+          { key: 'B', text: 'Baixa, média ou alta' },
+          { key: 'C', text: 'Interna' },
+          { key: 'D', text: 'Padrão' },
+        ],
+        correct: 'B'
+      },
+      {
+        id: 3,
+        title: 'Qual é o prazo máximo para o cliente responder a uma solicitação antes do cancelamento do chamado?',
+        options: [
+          { key: 'A', text: '10 dias' },
+          { key: 'B', text: '12 dias' },
+          { key: 'C', text: '15 dias' },
+          { key: 'D', text: '16 dias' },
+        ],
+        correct: 'D'
+      },
+      {
+        id: 4,
+        title: 'Quem analisa as sugestões de melhoria encaminhadas pela equipe?',
+        options: [
+          { key: 'A', text: 'Juliana Juvêncio e Luiz Fernando' },
+          { key: 'B', text: 'Renan, Naira, Matheus e Daniel' },
+          { key: 'C', text: 'Sara e Sabrina' },
+          { key: 'D', text: 'Gessika e Helen' },
+        ],
+        correct: 'B'
+      },
+      {
+        id: 5,
+        title: 'O pedido de extensão de prazo deve ser feito:',
+        options: [
+          { key: 'A', text: 'Após transferir o chamado ao N2' },
+          { key: 'B', text: 'Antes da transferência para o N2' },
+          { key: 'C', text: 'Somente se o cliente autorizar' },
+          { key: 'D', text: 'Durante o fechamento do chamado' },
+        ],
+        correct: 'B'
+      },
+      {
+        id: 6,
+        title: 'Qual é o foco principal dos chamados de Sara Batista Lima Quinta?',
+        options: [
+          { key: 'A', text: 'Ponto eletrônico e eSocial' },
+          { key: 'B', text: 'Mensageria e folha de pagamento' },
+          { key: 'C', text: 'Relatórios e dashboards' },
+          { key: 'D', text: 'Chamados do CNMP' },
+        ],
+        correct: 'B'
+      },
+    ]
+  },
+
+  quiz6: {
+    id: 'quiz6',
+    title: 'Desafio: Processo de Chamados',
+    description: 'Verifique seus conhecimentos sobre as regras de atendimento e chamados (Verdadeiro/Falso).',
+    points: 20,
+    questions: [
+      {
+        id: 1,
+        title: 'A equipe N1 deve sempre justificar qualquer mudança de severidade ou natureza de chamado.',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'A' // ✅ Verdadeiro
+      },
+      {
+        id: 2,
+        title: 'Chamados de manutenção corretiva podem ser classificados como "planejados".',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'B' // ❌ Falso
+      },
+      {
+        id: 3,
+        title: 'O cliente do MPRO pode contatar Sara Batista Lima Quinta diretamente por telefone ou e-mail.',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'A' // ✅ Verdadeiro
+      },
+      {
+        id: 4,
+        title: 'Se o cliente não responder em 16 dias, o chamado é automaticamente fechado sem notificação.',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'B' // ❌ Falso
+      },
+    ],
+  },
+
+  quiz7: {
+    id: 'quiz7',
+    title: 'Desafio: Processo de Chamados - Parte 2',
+    description: 'Teste seus conhecimentos sobre sugestões de melhoria, SLA e fluxo de chamados (Verdadeiro/Falso).',
+    points: 20,
+    questions: [
+      {
+        id: 1,
+        title: 'Sugestões de melhoria são avaliadas apenas por Juliana Juvêncio.',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'B' // ❌ Falso
+      },
+      {
+        id: 2,
+        title: 'A equipe N1 pode solicitar renegociação de SLA mesmo sem resposta do cliente.',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'A' // ✅ Verdadeiro
+      },
+      {
+        id: 3,
+        title: 'Após o N2 atender um chamado, ele nunca retorna ao N1.',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'B' // ❌ Falso — Retorna para ajustes de SLA ou finalização.
+      },
+      {
+        id: 4,
+        title: 'O painel de suporte mostra chamados na fila, aguardando o cliente e em homologação.',
+        options: [
+          { key: 'A', text: 'Verdadeiro' },
+          { key: 'B', text: 'Falso' },
+        ],
+        correct: 'A' // ✅ Verdadeiro
+      },
+    ],
+  },
+
 };
 
 // Rota para obter dados da missão
@@ -260,10 +427,10 @@ router.post('/complete-quiz-mission', authMiddleware, async (req, res) => {
     const safeTimeSpent = Number.isFinite(timeSpent) ? Math.max(0, Number(timeSpent)) : 0;
     
     // Cálculo de pontos baseado em acertos e tempo
-    let basePoints = safeCorrectCount * 2; // 2 pontos por acerto
+    let basePoints = safeCorrectCount * 2; // 2 pontos por acerto (Max 20)
     let timeBonus = 0;
     
-    // Bônus de tempo: quanto mais rápido, mais pontos
+    // Bônus de tempo: quanto mais rápido, mais pontos (Max 10)
     if (safeTimeSpent > 0) {
       const maxTime = 300; // 5 minutos máximo para bônus
       const timeRatio = Math.max(0, (maxTime - safeTimeSpent) / maxTime);
@@ -311,13 +478,13 @@ router.post('/complete-quiz-mission-3', authMiddleware, async (req, res) => {
     const safeCorrectCount = Number.isFinite(correctCount) ? Math.max(0, Math.min(2, Number(correctCount))) : 0;
     const safeTimeSpent = Number.isFinite(timeSpent) ? Math.max(0, Number(timeSpent)) : 0;
     
-    let basePoints = safeCorrectCount * 5; // 5 pontos por acerto
+    let basePoints = safeCorrectCount * 5; // 5 pontos por acerto (Max 10)
     let timeBonus = 0;
     
     if (safeTimeSpent > 0) {
       const maxTime = 180; // 3 minutos máximo para bônus
       const timeRatio = Math.max(0, (maxTime - safeTimeSpent) / maxTime);
-      timeBonus = Math.floor(timeRatio * 5); // Até 5 pontos de bônus
+      timeBonus = Math.floor(timeRatio * 5); // Até 5 pontos de bônus (Max Total 15)
     }
     
     const missionPoints = Math.min(15, basePoints + timeBonus);
@@ -361,13 +528,13 @@ router.post('/complete-quiz-mission-4', authMiddleware, async (req, res) => {
     const safeCorrectCount = Number.isFinite(correctCount) ? Math.max(0, Math.min(2, Number(correctCount))) : 0;
     const safeTimeSpent = Number.isFinite(timeSpent) ? Math.max(0, Number(timeSpent)) : 0;
     
-    let basePoints = safeCorrectCount * 5; // 5 pontos por acerto
+    let basePoints = safeCorrectCount * 5; // 5 pontos por acerto (Max 10)
     let timeBonus = 0;
     
     if (safeTimeSpent > 0) {
       const maxTime = 180; // 3 minutos máximo para bônus
       const timeRatio = Math.max(0, (maxTime - safeTimeSpent) / maxTime);
-      timeBonus = Math.floor(timeRatio * 5); // Até 5 pontos de bônus
+      timeBonus = Math.floor(timeRatio * 5); // Até 5 pontos de bônus (Max Total 15)
     }
     
     const missionPoints = Math.min(15, basePoints + timeBonus);
@@ -392,11 +559,11 @@ router.post('/complete-quiz-mission-4', authMiddleware, async (req, res) => {
   }
 });
 
-// 🟢 NOVO: Rota para completar missão de Caça Palavras (Missão 13)
+// Rota para completar missão de Caça Palavras (Missão 13)
 router.post('/complete-word-search', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const missionId = 'mission5'; // ID da missão 'Caça Palavras da Empresa'
+    const missionId = 'cacaPalavras'; 
     const { timeSpent } = req.body || {}; // O frontend envia apenas o tempo gasto
     
     const user = await User.findById(userId);
@@ -411,7 +578,7 @@ router.post('/complete-word-search', authMiddleware, async (req, res) => {
 
     const safeTimeSpent = Number.isFinite(timeSpent) ? Math.max(0, Number(timeSpent)) : 0;
     
-    // Lógica de pontos: 15 pontos base (conforme index.tsx) + bônus por tempo
+    // Lógica de pontos: 15 pontos base + bônus por tempo
     const basePoints = 15; 
     let timeBonus = 0;
     
@@ -419,10 +586,10 @@ router.post('/complete-word-search', authMiddleware, async (req, res) => {
     if (safeTimeSpent > 0) {
       const maxTimeForBonus = 300; // 5 minutos = 300 segundos
       const timeSaved = maxTimeForBonus - safeTimeSpent;
-      timeBonus = Math.max(0, Math.floor(timeSaved / 60)); // 1 ponto de bônus por minuto rápido
+      timeBonus = Math.max(0, Math.floor(timeSaved / 60)); // 1 ponto de bônus por minuto rápido (Max 4)
     }
     
-    const missionPoints = basePoints + timeBonus;
+    const missionPoints = basePoints + timeBonus; // Max 19 pontos
 
     // Atualiza o perfil do usuário
     user.points += missionPoints;
@@ -442,6 +609,190 @@ router.post('/complete-word-search', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Erro ao completar missão Caça Palavras:', error);
     return res.status(500).json({ message: 'Erro do servidor.' });
+  }
+});
+
+// Rota para completar missão 5
+router.post('/complete-quiz-mission-5', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const missionId = 'quiz5'; 
+
+    const { correctCount, timeSpent } = req.body || {}; 
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+    if (user.missionsCompleted && user.missionsCompleted.includes(missionId)) {
+      return res.status(400).json({ message: 'Esta missão já foi completada.' });
+    }
+
+    // Lógica de Pontuação: 6 questões, 3 pontos por acerto. Max Base: 18. Max Total: 20. Max Bônus: 2.
+    const totalQuestions = 6;
+    const maxTotalPoints = 20;
+    const maxBonusPoints = 2; // 20 - (6 * 3)
+
+    // Garante que o correctCount é um número entre 0 e 6.
+    const safeCorrectCount = Number.isFinite(correctCount) ? Math.max(0, Math.min(totalQuestions, Number(correctCount))) : 0;
+    const safeTimeSpent = Number.isFinite(timeSpent) ? Math.max(0, Number(timeSpent)) : 0;
+    
+    let basePoints = safeCorrectCount * 3;
+    let timeBonus = 0; 
+    
+    // Lógica de Bônus (similar a quiz3/4, com limite de 2 pontos)
+    if (safeTimeSpent > 0) {
+      const maxTime = 180; // 3 minutos para bônus
+      const timeRatio = Math.max(0, (maxTime - safeTimeSpent) / maxTime);
+      timeBonus = Math.floor(timeRatio * maxBonusPoints); // Até 2 pontos de bônus
+    }
+    
+    const missionPoints = Math.min(maxTotalPoints, basePoints + timeBonus); // Garante que não ultrapasse 20
+
+    // Salva o progresso no banco de dados, substituindo a chamada à função 'completeMission'
+    user.points += missionPoints;
+    user.missionsCompleted = Array.isArray(user.missionsCompleted) ? user.missionsCompleted : [];
+    user.missionsCompleted.push(missionId);
+    await user.save();
+
+    return res.status(200).json({ 
+      message: `Missão 5 concluída! Você ganhou ${missionPoints} pontos (${basePoints} por acertos + ${timeBonus} bônus de velocidade).`, 
+      user, 
+      pointsBreakdown: { basePoints, timeBonus, totalPoints: missionPoints } 
+    });
+  } catch (error) {
+    console.error('Erro ao completar missão quiz5:', error);
+    return res.status(500).json({ message: 'Erro do servidor.' });
+  }
+});
+
+// Rota para completar a Missão 6 (quiz6)
+router.post('/complete-mission-quiz6', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let { totalTime, correctAnswers } = req.body;
+    const missionId = 'quiz6';
+
+    // 🚨 VALIDAÇÃO OBRIGATÓRIA PARA O ERRO 400
+    if (typeof totalTime === 'undefined' || typeof correctAnswers === 'undefined') {
+      return res.status(400).json({ message: 'Dados incompletos: totalTime e correctAnswers são obrigatórios.' });
+    }
+    
+    // Garante que são números (converte string para number, se necessário)
+    totalTime = Number(totalTime);
+    correctAnswers = Number(correctAnswers);
+
+    // Validação extra se não forem números válidos
+    if (isNaN(totalTime) || isNaN(correctAnswers)) {
+      return res.status(400).json({ message: 'Valores inválidos fornecidos para tempo ou acertos.' });
+    }
+
+    const missionData = MISSION_DATA[missionId]; 
+    if (!missionData) {
+      return res.status(404).json({ message: 'Missão (dados) não encontrada.' });
+    }
+
+    const totalQuestions = missionData.questions.length;
+    
+    // Lógica de cálculo de pontos
+    const basePoints = 15; // Usando um valor base, se não estiver em MISSION_DATA
+    
+    // Cálculo de bônus baseado no acerto
+    const correctRatio = correctAnswers / totalQuestions;
+    const baseBonus = 5; 
+    const finalBonus = Math.round(baseBonus * correctRatio);
+    const missionPoints = basePoints + finalBonus; 
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    // Lógica para salvar a conclusão e os pontos
+    user.missionsCompleted = Array.isArray(user.missionsCompleted) ? user.missionsCompleted : [];
+    if (!user.missionsCompleted.includes(missionId)) {
+      user.missionsCompleted.push(missionId);
+      user.points += missionPoints;
+      await user.save();
+    }
+    
+    // Resposta de sucesso
+    return res.json({ 
+      message: `Missão ${missionId} completada com sucesso! Você ganhou ${missionPoints} pontos.`, 
+      user, 
+      pointsBreakdown: { basePoints, finalBonus, totalPoints: missionPoints } 
+    });
+
+  } catch (error) {
+    console.error('Erro ao completar missão quiz6:', error);
+    // Esta mensagem aparece no log do backend
+    return res.status(500).json({ message: 'Erro do servidor ao tentar finalizar a missão.' });
+  }
+});
+
+// Rota para completar a Missão 7 (quiz7)
+router.post('/complete-mission-quiz7', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    let { totalTime, correctAnswers } = req.body;
+    const missionId = 'quiz7';
+
+    // 🚨 VALIDAÇÃO OBRIGATÓRIA PARA O ERRO 400
+    if (typeof totalTime === 'undefined' || typeof correctAnswers === 'undefined') {
+      return res.status(400).json({ message: 'Dados incompletos: totalTime e correctAnswers são obrigatórios.' });
+    }
+    
+    // Garante que são números (converte string para number, se necessário)
+    totalTime = Number(totalTime);
+    correctAnswers = Number(correctAnswers);
+
+    // Validação extra se não forem números válidos
+    if (isNaN(totalTime) || isNaN(correctAnswers)) {
+      return res.status(400).json({ message: 'Valores inválidos fornecidos para tempo ou acertos.' });
+    }
+
+    const missionData = MISSION_DATA[missionId]; 
+    if (!missionData) {
+      return res.status(404).json({ message: 'Missão (dados) não encontrada.' });
+    }
+
+    const totalQuestions = missionData.questions.length;
+    
+    // Lógica de cálculo de pontos
+    const basePoints = 15; // Usando um valor base, se não estiver em MISSION_DATA
+    
+    // Cálculo de bônus baseado no acerto
+    const correctRatio = correctAnswers / totalQuestions;
+    const baseBonus = 5; 
+    const finalBonus = Math.round(baseBonus * correctRatio);
+    const missionPoints = basePoints + finalBonus; 
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
+
+    // Verificar se já completou a missão
+    if (user.missionsCompleted && user.missionsCompleted.includes(missionId)) {
+      return res.status(400).json({ message: 'Esta missão já foi completada.' });
+    }
+
+    // Lógica para salvar a conclusão e os pontos
+    user.missionsCompleted = Array.isArray(user.missionsCompleted) ? user.missionsCompleted : [];
+    user.missionsCompleted.push(missionId);
+    user.points += missionPoints;
+    await user.save();
+    
+    // Resposta de sucesso
+    return res.json({ 
+      message: `Missão ${missionId} completada com sucesso! Você ganhou ${missionPoints} pontos.`, 
+      user, 
+      pointsBreakdown: { basePoints, finalBonus, totalPoints: missionPoints } 
+    });
+
+  } catch (error) {
+    console.error('Erro ao completar missão quiz7:', error);
+    return res.status(500).json({ message: 'Erro do servidor ao tentar finalizar a missão.' });
   }
 });
 
