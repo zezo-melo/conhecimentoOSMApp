@@ -5,12 +5,13 @@ export const API_CONFIG = {
   // A URL base da sua API sem o caminho de rota
   emulator: 'http://10.0.2.2:3000/api', 
   // Para testar em um celular na mesma rede local que o seu PC.
-  // IMPORTANTE: Substitua '172.17.1.103' pelo IP do seu próprio computador.
+  // IMPORTANTE: Substitua pelo IP do seu próprio computador.
   localNetwork: 'http://192.168.1.15:3000/api',
-  // Para o seu backend hospedado no Vercel
+  // Para o seu backend hospedado no servidor da empresa
+  // IMPORTANTE: Configure EXPO_PUBLIC_API_URL no eas.json ou app.config.js
+  production: 'https://seu-servidor.com/api',
+  // Para o seu backend hospedado no Vercel (fallback)
   vercel: 'https://seu-backend-incrivel.vercel.app/api',
-  // Para usar com tunnel do Expo (funciona em qualquer rede)
-  tunnel: 'https://seu-backend-incrivel.vercel.app/api',
 };
 
 // Configuração automática baseada na plataforma
@@ -32,8 +33,8 @@ const getApiUrl = () => {
     return API_CONFIG.localNetwork;
   }
   
-  // Para produção, use vercel
-  return API_CONFIG.vercel;
+  // Para produção, use a URL de produção ou vercel como fallback
+  return API_CONFIG.production || API_CONFIG.vercel;
 };
 
 // A URL base que aponta para o seu backend.
