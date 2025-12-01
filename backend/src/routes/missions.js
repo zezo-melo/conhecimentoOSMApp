@@ -796,14 +796,26 @@ router.post('/complete-mission-quiz7', authMiddleware, async (req, res) => {
   }
 });
 
+// Mapa de baús e pontos definidos no servidor (não confiar em valores enviados pelo cliente)
+const CHEST_POINTS = {
+  chest1: 5,
+  chest2: 10,
+  chest3: 15,
+};
+
 // Rota para abrir baú de bônus
 router.post('/open-chest', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { chestId, points } = req.body;
+    const { chestId } = req.body || {};
 
-    if (!chestId || !points) {
-      return res.status(400).json({ message: 'ID do baú e pontos são obrigatórios.' });
+    if (!chestId) {
+      return res.status(400).json({ message: 'ID do baú é obrigatório.' });
+    }
+
+    const points = CHEST_POINTS[chestId];
+    if (!points) {
+      return res.status(400).json({ message: 'Baú inválido.' });
     }
 
     const user = await User.findById(userId);

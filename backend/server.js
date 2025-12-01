@@ -3,17 +3,45 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Segurança básica de headers
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
+
 app.use(express.json());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || '*',
-  credentials: true,
-}));
+
+// CORS configurável por ambiente
+const allowedOrigins =
+  process.env.CORS_ORIGIN?.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean) || ['*'];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  }),
+);
+
+// Rate limiting básico para toda a API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // máximo de requisições por IP na janela
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api', apiLimiter);
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/app_beneficios';
 

@@ -4,10 +4,24 @@ const User = require('../models/User'); // Importa a Model de usuário
 
 /**
  * Lógica para cadastrar um novo usuário.
+ * Inclui validação básica de entrada para evitar dados inconsistentes.
  */
 exports.register = async (req, res) => {
   try {
-    const { name, email, dob, docType, document, phone, password } = req.body;
+    const { name, email, dob, docType, document, phone, password } = req.body || {};
+
+    if (!name || !email || !dob || !docType || !document || !phone || !password) {
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios.' });
+    }
+
+    if (typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ message: 'E-mail inválido.' });
+    }
+
+    if (typeof password !== 'string' || password.length < 8) {
+      return res.status(400).json({ message: 'A senha deve ter pelo menos 8 caracteres.' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(409).json({ message: 'Usuário já existe.' });
@@ -26,7 +40,12 @@ exports.register = async (req, res) => {
  */
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'E-mail e senha são obrigatórios.' });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Credenciais inválidas.' });
