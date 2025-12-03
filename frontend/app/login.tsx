@@ -67,38 +67,6 @@ export default function LoginScreen() {
                     style={styles.logoOsm}
                     resizeMode="contain"
                   />
-            <View style={styles.logoContainer}>              
-             <View style={styles.logoCarousel}>
-                <Swiper
-                  autoplay
-                  autoplayTimeout={2.5} // tempo em segundos para trocar
-                  showsPagination={false} // remove os pontinhos de paginação
-                  loop
-                  height={80}
-                >
-                  <Image
-                    source={require('../assets/images/itau-logo.png')}
-                    style={styles.logo}
-                    resizeMode="contain"
-                  />
-                  <Image
-                    source={require('../assets/images/brb-logo.png')}
-                    style={styles.logo}
-                    resizeMode="contain"
-                  />
-                  <Image
-                    source={require('../assets/images/btg-logo.png')}
-                    style={styles.logo}
-                    resizeMode="contain"
-                  />
-                  <Image
-                    source={require('../assets/images/fgv-logo.png')}
-                    style={styles.logo}
-                    resizeMode="contain"
-                  />
-                </Swiper>
-              </View>
-            </View>
             <Text style={styles.title}>App do Conhecimento</Text>
             <Text style={styles.subtitle}>Faça login para continuar</Text>
           </View>
