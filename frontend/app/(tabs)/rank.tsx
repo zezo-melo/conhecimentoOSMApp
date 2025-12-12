@@ -11,12 +11,14 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import Header from '../../components/Header';
 import { API_URL } from '../../constants';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // 1. Importação da função formatName
 import { formatName } from "../../utils/formatName";
+import AvatarImage from '../../components/AvatarImage';
 
 type RankItem = {
   position: number;
@@ -40,31 +42,44 @@ export default function RankScreen() {
   const [me, setMe] = useState<RankItem | null>(null);
   const [total, setTotal] = useState<number>(0);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Para forçar refresh
   const pageSize = 50;
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const token = await AsyncStorage.getItem('@AppBeneficios:token');
-        if (!token) throw new Error('Usuário não autenticado');
-        const res = await fetch(`${API_URL}/leaderboard?limit=${pageSize}&skip=0`, {
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Falha ao carregar ranking');
-        const data = await res.json();
-        setLeaderboard(data.leaderboard || []);
-        setMe(data.me || null);
-        setTotal(data.total || 0);
-      } catch (e: any) {
-        setError(e.message || 'Erro ao carregar ranking');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLeaderboard();
+  const fetchLeaderboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = await AsyncStorage.getItem('@AppBeneficios:token');
+      if (!token) throw new Error('Usuário não autenticado');
+      const res = await fetch(`${API_URL}/leaderboard?limit=${pageSize}&skip=0`, {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Falha ao carregar ranking');
+      const data = await res.json();
+      console.log('Ranking carregado. Total de usuários:', data.total);
+      console.log('Foto do usuário atual:', data.me?.photoUrl ? 'Sim' : 'Não');
+      setLeaderboard(data.leaderboard || []);
+      setMe(data.me || null);
+      setTotal(data.total || 0);
+    } catch (e: any) {
+      console.error('Erro ao carregar ranking:', e);
+      setError(e.message || 'Erro ao carregar ranking');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard, refreshKey]);
+
+  // Recarrega quando a tela ganha foco (quando volta de editar perfil, por exemplo)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Tela de ranking ganhou foco, recarregando...');
+      fetchLeaderboard();
+    }, [fetchLeaderboard])
+  );
 
   const handleLoadMore = useCallback(async () => {
     if (isFetchingMore || leaderboard.length >= total) return;
@@ -130,7 +145,6 @@ export default function RankScreen() {
         {top3.length > 0 && (
           <View style={styles.podiumContainer}>
             {top3.map((item, index) => {
-              const hasPhoto = !!item.photoUrl;
               const placeStyle =
                 index === 0
                   ? styles.firstPlace
@@ -150,15 +164,14 @@ export default function RankScreen() {
                 >
                   <Text style={styles.positionLabel}>{`${item.position}º lugar`}</Text>
 
-                  {hasPhoto ? (
-                    <Image source={{ uri: item.photoUrl as string }} style={styles.avatarCircle} />
-                  ) : (
-                    <View style={[styles.podiumCircle, placeStyle]}>
-                      <Text style={styles.initial}>
-                        {item.name.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
+                  <AvatarImage
+                    photoUrl={item.photoUrl}
+                    name={item.name}
+                    size={80}
+                    style={styles.avatarCircle}
+                    fallbackStyle={[styles.podiumCircle, placeStyle]}
+                    fallbackTextStyle={styles.initial}
+                  />
 
                   <Text 
                     style={styles.podiumName}
@@ -182,9 +195,12 @@ export default function RankScreen() {
               <View style={styles.positionContainer}>
                 <Text style={styles.positionText}>{me.position}</Text>
               </View>
-              {!!me.photoUrl && (
-                <Image source={{ uri: me.photoUrl }} style={styles.avatarThumb} />
-              )}
+              <AvatarImage
+                photoUrl={me.photoUrl}
+                name={me.name}
+                size={36}
+                style={styles.avatarThumb}
+              />
               <View style={styles.userInfo}>
                 <Text 
                   style={styles.userName}
@@ -209,9 +225,12 @@ export default function RankScreen() {
               <View style={styles.positionContainer}>
                 <Text style={styles.positionText}>{u.position}</Text>
               </View>
-              {!!u.photoUrl && (
-                <Image source={{ uri: u.photoUrl }} style={styles.avatarThumb} />
-              )}
+              <AvatarImage
+                photoUrl={u.photoUrl}
+                name={u.name}
+                size={36}
+                style={styles.avatarThumb}
+              />
               <View style={styles.userInfo}>
                 <Text 
                   style={styles.userName}

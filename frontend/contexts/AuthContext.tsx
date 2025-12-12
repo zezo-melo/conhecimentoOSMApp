@@ -253,14 +253,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateProfile = async (profileData: Partial<User>) => {
     setIsLoading(true);
     try {
-      const response = await axios.put(`${API_URL}/profile`, profileData);
+      console.log('📤 [AuthContext] Enviando atualização de perfil...');
+      
+      // Calcula tamanho do payload se tiver photoUrl
+      if (profileData.photoUrl) {
+        const sizeInBytes = (profileData.photoUrl.length * 3) / 4;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+        console.log('📸 [AuthContext] PhotoUrl presente. Tamanho:', sizeInMB.toFixed(2), 'MB');
+      } else {
+        console.log('📸 [AuthContext] PhotoUrl não presente');
+      }
+      
+      // Configura axios com limite maior para esta requisição específica
+      const response = await axios.put(`${API_URL}/profile`, profileData, {
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
+        timeout: 60000, // 60 segundos de timeout
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
       const updatedUser = response.data;
+      
+      console.log('✅ [AuthContext] Perfil atualizado com sucesso');
+      console.log('📸 [AuthContext] PhotoUrl recebida:', updatedUser.photoUrl ? `Sim (${updatedUser.photoUrl.substring(0, 50)}...)` : 'Não');
+      
       setUser(updatedUser);
-      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
     } catch (error) {
       const err = error as any;
-      console.error('Erro ao atualizar perfil:', err.response?.data || err.message);
-      Alert.alert('Erro', err.response?.data?.message || 'Falha ao atualizar o perfil. Tente novamente.');
+      console.error('❌ [AuthContext] Erro ao atualizar perfil:', err.response?.data || err.message);
+      console.error('❌ [AuthContext] Status:', err.response?.status);
+      console.error('❌ [AuthContext] Dados do erro:', err.response?.data);
+      
+      // Tratamento específico para erro 413
+      if (err.response?.status === 413) {
+        const errorMessage = 'A imagem é muito grande. Por favor, selecione uma imagem menor ou tente novamente.';
+        throw new Error(errorMessage);
+      }
+      
       throw error;
     } finally {
       setIsLoading(false);

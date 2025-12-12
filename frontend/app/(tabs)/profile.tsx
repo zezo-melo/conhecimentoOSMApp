@@ -7,6 +7,7 @@ import { Stack } from 'expo-router';
 import { router } from "expo-router";
 import { formatName } from "../../utils/formatName";
 import { API_URL } from '../../constants';
+import AvatarImage from '../../components/AvatarImage';
 
 
 const MENU_OPTIONS = [
@@ -95,13 +96,14 @@ export default function ProfileScreen() {
         <View style={styles.headerSection}>
           {/* Avatar */}
           <View style={styles.avatarContainer}>
-            { (profile?.photoUrl || user?.photoUrl) ? (
-              <Image source={{ uri: (profile?.photoUrl || user?.photoUrl) as string }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{formatName(user?.name?.charAt(0)) || '?'}</Text>
-              </View>
-            ) }
+            <AvatarImage
+              photoUrl={profile?.photoUrl || user?.photoUrl}
+              name={user?.name}
+              size={100}
+              style={styles.avatarImage}
+              fallbackStyle={styles.avatar}
+              fallbackTextStyle={styles.avatarText}
+            />
             <View style={styles.levelBadge}>
               <Text style={styles.levelBadgeText}>{user?.level || 'N/A'}</Text>
             </View>

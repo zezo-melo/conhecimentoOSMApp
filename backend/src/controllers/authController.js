@@ -118,8 +118,19 @@ exports.updateProfile = async (req, res) => {
         if (updates.docType) user.docType = updates.docType;
         if (updates.document) user.document = updates.document;
         if (updates.phone) user.phone = updates.phone;
-        if (updates.bio) user.bio = updates.bio;
-        if (updates.photoUrl) user.photoUrl = updates.photoUrl;
+        if (updates.bio !== undefined) user.bio = updates.bio || null;
+        
+        // Atualiza photoUrl (pode ser string base64 ou null/undefined)
+        if (updates.photoUrl !== undefined) {
+            if (updates.photoUrl && typeof updates.photoUrl === 'string' && updates.photoUrl.trim() !== '') {
+                user.photoUrl = updates.photoUrl.trim();
+                console.log('Foto atualizada. Tamanho da string:', updates.photoUrl.length, 'caracteres');
+            } else {
+                // Se for null, undefined ou string vazia, limpa a foto
+                user.photoUrl = null;
+                console.log('Foto removida/limpa');
+            }
+        }
         
         // Atualiza campos de ENDEREÇO (Sub-documento 'address')
         if (updates.address) {
@@ -136,6 +147,7 @@ exports.updateProfile = async (req, res) => {
         if (updates.zipCode && user.address) user.address.zipCode = updates.zipCode; 
         
         console.log('Salvando usuário no banco de dados...');
+        console.log('PhotoUrl antes de salvar:', user.photoUrl ? `Sim (${user.photoUrl.substring(0, 50)}...)` : 'Não');
         await user.save(); 
         console.log('Usuário salvo com sucesso.');
 
@@ -143,7 +155,9 @@ exports.updateProfile = async (req, res) => {
         const updatedUser = user.toObject();
         delete updatedUser.password;
         
-        console.log('Retornando objeto atualizado para o frontend. Novos pontos:', updatedUser.points, 'PointsAwarded:', pointsAwarded);
+        console.log('Retornando objeto atualizado para o frontend.');
+        console.log('PhotoUrl no retorno:', updatedUser.photoUrl ? `Sim (${updatedUser.photoUrl.substring(0, 50)}...)` : 'Não');
+        console.log('Novos pontos:', updatedUser.points, 'PointsAwarded:', pointsAwarded);
 
         return res.status(200).json(updatedUser); 
 

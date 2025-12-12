@@ -5,6 +5,9 @@ const authMiddleware = require('../middleware/authMiddleware');
 const User = require('../models/User');
 const { getProfile, updateProfile } = require('../controllers/authController');
 
+// Nota: O limite de body é configurado no server.js principal
+// Não precisamos configurar novamente aqui para evitar conflitos
+
 // Rota GET para buscar o perfil do usuário logado
 router.get('/', authMiddleware, getProfile);
 

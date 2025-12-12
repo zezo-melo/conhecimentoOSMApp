@@ -17,8 +17,11 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '@/constants';
 import Header from '@/components/Header';
 import BackButton from '@/components/BackButton';
+import AvatarImage from '@/components/AvatarImage';
 
 export default function UpdateProfileScreen() {
   const { user, updateProfile, isLoading } = useAuth();
@@ -57,57 +60,63 @@ export default function UpdateProfileScreen() {
 
   useEffect(() => {
     if (!user) return;
-
-    const profile = user.profile || {};
     
     // 1. CARREGAMENTO DE DADOS DE NÍVEL SUPERIOR
-    setName(extractProfileField(profile.name || user.name));
-    setPhone(extractProfileField(profile.phone || user.phone));
+    setName(extractProfileField(user.name));
+    setPhone(extractProfileField(user.phone));
 
-    setPhotoUrl(
-      profile.photoUrl?.trim()
-        ? profile.photoUrl
-        : user.photoUrl?.trim()
-        ? user.photoUrl
-        : null
-    );
+    // Carrega a foto do usuário (pode ser base64 ou URL)
+    if (user.photoUrl && typeof user.photoUrl === 'string') {
+      const trimmed = user.photoUrl.trim();
+      if (trimmed.startsWith('data:image/') || 
+          trimmed.startsWith('http://') || 
+          trimmed.startsWith('https://')) {
+        setPhotoUrl(trimmed);
+      } else {
+        // Se for URI local antiga, limpa
+        setPhotoUrl(null);
+      }
+    } else {
+      setPhotoUrl(null);
+    }
 
     // 2. CARREGAMENTO DE DADOS DE ENDEREÇO
     // addressObject é o objeto aninhado que contém street, city, state, etc.
     const addressObject = user.address && typeof user.address === 'object' 
         ? user.address 
-        : profile.address && typeof profile.address === 'object' 
-        ? profile.address 
-        : {}; 
-
+        : {};
+    
+    // Type assertion para acessar propriedades dinâmicas que podem existir no banco
+    const addr = addressObject as any;
+    
     // ✅ CORREÇÃO CHAVES MOONGOSE: Acessa as chaves aninhadas definidas no seu Model.
     // Inclui tentativas de chaves comuns para o Endereço (rua/logradouro).
     setAddress(extractProfileField(
         addressObject.street ||          // Chave do seu schema
-        addressObject.logradouro ||      // Tentativa 2 (Comum no Brasil)
-        addressObject.rua ||             // Tentativa 3 (Comum no Brasil)
-        addressObject.endereco ||        // Tentativa 4
-        addressObject.line1              // Tentativa 5
+        addr.logradouro ||               // Tentativa 2 (Comum no Brasil)
+        addr.rua ||                      // Tentativa 3 (Comum no Brasil)
+        addr.endereco ||                 // Tentativa 4
+        addr.line1                       // Tentativa 5
     )); 
     
     // As chaves abaixo usam o padrão do seu schema (city, state, zipCode)
     setCity(extractProfileField(addressObject.city));
     setState(extractProfileField(addressObject.state));
-    setZipCode(extractProfileField(addressObject.zipCode));
+    setZipCode(extractProfileField(addr.zipCode));
 
     // Bio
-    setBio(extractProfileField(user.bio || profile.bio));
+    setBio(extractProfileField(user.bio));
     
     // 💡 LOG DE VERIFICAÇÃO FINAL: Verifique o console para ver o valor de 'street'
     console.log("Valores carregados (street/city/state): ", { 
         name: extractProfileField(user.name),
         phone: extractProfileField(user.phone), 
         street: extractProfileField(addressObject.street), 
-        logradouro: extractProfileField(addressObject.logradouro),
-        rua: extractProfileField(addressObject.rua),            
+        logradouro: extractProfileField(addr.logradouro),
+        rua: extractProfileField(addr.rua),            
         city: extractProfileField(addressObject.city),     
         bio: extractProfileField(user.bio) 
-    }); 
+    });
 
   }, [user]);
 
@@ -122,11 +131,71 @@ export default function UpdateProfileScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 1,
+      quality: 0.7, // Qualidade razoável para upload
+      allowsMultipleSelection: false,
     });
 
-    if (!result.canceled) {
-      setPhotoUrl(result.assets[0].uri);
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      const uri = asset.uri;
+      
+      // Faz upload da imagem para o servidor
+      try {
+        await uploadImageToServer(uri);
+      } catch (error: any) {
+        console.error('Erro ao fazer upload da imagem:', error);
+        Alert.alert('Erro', error.message || 'Não foi possível fazer upload da imagem. Tente novamente.');
+      }
+    }
+  };
+
+  const uploadImageToServer = async (imageUri: string) => {
+    try {
+      // Cria FormData para enviar o arquivo
+      const formData = new FormData();
+      
+      // Obtém o nome do arquivo da URI
+      const filename = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      
+      // Adiciona o arquivo ao FormData (formato correto para React Native)
+      formData.append('image', {
+        uri: Platform.OS === 'android' ? imageUri : imageUri.replace('file://', ''),
+        name: filename,
+        type: type,
+      } as any);
+
+      // Obtém o token de autenticação
+      const token = await AsyncStorage.getItem('@AppBeneficios:token');
+      
+      if (!token) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      // Faz o upload (NÃO inclui Content-Type no header, o fetch define automaticamente)
+      const response = await fetch(`${API_URL}/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          // NÃO definir Content-Type aqui, o fetch define automaticamente com boundary
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Erro ao fazer upload da imagem');
+      }
+
+      const data = await response.json();
+      console.log('Upload realizado com sucesso:', data.imageUrl);
+      
+      // Salva a URL da imagem
+      setPhotoUrl(data.imageUrl);
+    } catch (error: any) {
+      console.error('Erro no upload:', error);
+      throw error;
     }
   };
 
@@ -136,33 +205,34 @@ export default function UpdateProfileScreen() {
       return;
     }
     
+    // Não precisa mais verificar tamanho de base64, pois agora usamos upload de arquivo
+    
     // 3. ENVIO DE DADOS (Envia o endereço como objeto aninhado, conforme Model)
     const updatedData = {
       name,
       phone,
-      photoUrl,
-      bio,
+      photoUrl: photoUrl || undefined, // Converte null para undefined
+      bio: bio || undefined,
       address: {
-          street: address, // Envia o valor do campo "Endereço" para a chave 'street'
-          city: city,
-          state: state,
-          zipCode: zipCode,
+          street: address || undefined,
+          city: city || undefined,
+          state: state || undefined,
+          zipCode: zipCode || undefined,
       }
     };
 
     try {
+      console.log('Enviando atualização de perfil...');
       await updateProfile(updatedData); 
-      Alert.alert('Sucesso', 'Perfil atualizado');
+      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
       router.replace('/profile');
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Falha ao atualizar.');
+      console.error('Erro ao atualizar perfil:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Falha ao atualizar. Tente novamente.';
+      Alert.alert('Erro', errorMessage);
     }
   };
 
-  const getInitial = (userName?: string) =>
-    userName ? userName.charAt(0).toUpperCase() : '';
-
-  const hasValidPhoto = !!photoUrl && photoUrl.trim() !== '';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -182,13 +252,14 @@ export default function UpdateProfileScreen() {
             </View>
 
             <TouchableOpacity onPress={handleImagePicker} style={styles.profileImageContainer}>
-              {hasValidPhoto ? (
-                <Image source={{ uri: photoUrl as string }} style={styles.profileImage} />
-              ) : (
-                <View style={styles.initialContainer}>
-                  <Text style={styles.initialText}>{getInitial(user?.name || name)}</Text>
-                </View>
-              )}
+              <AvatarImage
+                photoUrl={photoUrl}
+                name={user?.name || name}
+                size={120}
+                style={styles.profileImage}
+                fallbackStyle={styles.initialContainer}
+                fallbackTextStyle={styles.initialText}
+              />
               <View style={styles.cameraIcon}>
                 <Ionicons name="camera" size={24} color="#fff" />
               </View>
