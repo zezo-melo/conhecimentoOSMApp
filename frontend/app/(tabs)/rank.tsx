@@ -12,6 +12,7 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import Header from '../../components/Header';
+import Avatar from '../../components/Avatar';
 import { API_URL } from '../../constants';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -150,15 +151,7 @@ export default function RankScreen() {
                 >
                   <Text style={styles.positionLabel}>{`${item.position}º lugar`}</Text>
 
-                  {hasPhoto ? (
-                    <Image source={{ uri: item.photoUrl as string }} style={styles.avatarCircle} />
-                  ) : (
-                    <View style={[styles.podiumCircle, placeStyle]}>
-                      <Text style={styles.initial}>
-                        {item.name.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                  )}
+                      <Avatar name={item.name} size={80} style={styles.avatarCircle} textStyle={styles.initial as any} />
 
                   <Text 
                     style={styles.podiumName}
@@ -182,9 +175,7 @@ export default function RankScreen() {
               <View style={styles.positionContainer}>
                 <Text style={styles.positionText}>{me.position}</Text>
               </View>
-              {!!me.photoUrl && (
-                <Image source={{ uri: me.photoUrl }} style={styles.avatarThumb} />
-              )}
+              <Avatar name={me.name as string} size={36} style={styles.avatarThumb} />
               <View style={styles.userInfo}>
                 <Text 
                   style={styles.userName}
@@ -209,9 +200,7 @@ export default function RankScreen() {
               <View style={styles.positionContainer}>
                 <Text style={styles.positionText}>{u.position}</Text>
               </View>
-              {!!u.photoUrl && (
-                <Image source={{ uri: u.photoUrl }} style={styles.avatarThumb} />
-              )}
+              <Avatar name={u.name as string} size={36} style={styles.avatarThumb} />
               <View style={styles.userInfo}>
                 <Text 
                   style={styles.userName}

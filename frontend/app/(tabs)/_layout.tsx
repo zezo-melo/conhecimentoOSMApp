@@ -59,6 +59,15 @@ export default function TabLayout() {
         }}
       />
 
+      {/* Mantém a rota Indicators, mas escondida da barra de tabs */}
+      <Tabs.Screen
+        name="Indicators"
+        options={{
+          title: 'Indicadores',
+          href: null,
+        }}
+      />
+
       {/* Essas telas não aparecerão mais na barra de navegação.
           Use 'href: null' para escondê-las, mas mantê-las na estrutura de navegação.
       */}

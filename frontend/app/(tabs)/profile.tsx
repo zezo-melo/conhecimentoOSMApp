@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert, Image } from 'react-native';
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
@@ -19,12 +19,18 @@ const MENU_OPTIONS = [
   },
   { 
     id: '1a', 
-    title: 'Ver meu currículo', 
+    title: 'Indicadores', 
     icon: '📄', 
     route: '/ProfileCurriculumScreen', 
     onPress: () => router.push('/ProfileCurriculumScreen') 
   },
-  { id: '2', title: 'Indicadores', icon: '📊', action: 'indicadores' },
+  // {
+  //   id: '1b',
+  //   title: 'Indicadores',
+  //   icon: '📈',
+  //   route: '/Indicators',
+  //   onPress: () => router.push('/Indicators')
+  // },
   { id: '3', title: 'Configurações', icon: '⚙️', action: 'settings' },
   { id: '4', title: 'Notificações', icon: '🔔', action: 'notifications' },
   { id: '5', title: 'Privacidade', icon: '🔒', action: 'privacy' },
@@ -102,13 +108,9 @@ export default function ProfileScreen() {
         <View style={styles.headerSection}>
           {/* Avatar */}
           <View style={styles.avatarContainer}>
-            { (profile?.photoUrl || user?.photoUrl) ? (
-              <Image source={{ uri: (profile?.photoUrl || user?.photoUrl) as string }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{formatName(user?.name?.charAt(0)) || '?'}</Text>
-              </View>
-            ) }
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{formatName(user?.name?.charAt(0)) || '?'}</Text>
+            </View>
             <View style={styles.levelBadge}>
               <Text style={styles.levelBadgeText}>{user?.level || 'N/A'}</Text>
             </View>

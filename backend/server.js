@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const path = require('path');
 // const curriculumRoutes = require('./src/controllers/CurriculumController.js'); // REMOVIDO
 
 dotenv.config();
@@ -15,6 +16,9 @@ app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || '*',
   credentials: true,
 }));
+
+// Serve arquivos enviados (avatars, etc.)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/app_beneficios';
 

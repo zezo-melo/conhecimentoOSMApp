@@ -7,6 +7,7 @@ import axios from 'axios';
 import { API_URL } from '../../constants/index';
 import BackButton from '../../components/BackButton';
 import Header from '@/components/Header';
+import Avatar from '../../components/Avatar';
 import CurriculumCharts from '@/components/CurriculumCharts'; // Componente de gráficos
 
 // --- CORES DA IDENTIDADE VISUAL OSM ---
@@ -20,6 +21,13 @@ const COLORS = {
     mid: '#facc15',  // Amarelo para risco médio
     high: '#ef4444', // Vermelho para alto risco
     info: '#3b82f6', // Azul para status informativo
+};
+
+// Utility: garante que o valor seja seguro para renderizar em <Text>
+const ensureText = (v: any) => {
+    if (v === null || v === undefined) return '';
+    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v);
+    try { return JSON.stringify(v); } catch (e) { return ''; }
 };
 
 // --- TYPESCRIPT TYPES ---
@@ -80,23 +88,20 @@ const ProfileHeader: React.FC<{ profile: ProfileData }> = ({ profile }) => (
     <View>
     <BackButton />
     </View>
-        <Image 
-            source={{ uri: profile.avatar_url }} 
-            style={headerStyles.avatar} 
-        />
-        <View style={headerStyles.info}>
-            <Text style={headerStyles.name}>{profile.name}</Text>
-            <Text style={headerStyles.role}>{profile.role}</Text>
-            <View style={headerStyles.badgeRow}>
-                <Text style={headerStyles.badgeText}>Medalha: </Text>
-                <Text style={headerStyles.medal}>{profile.medal.toUpperCase()} 🥇</Text>
-            </View>
-        </View>
-        <View style={headerStyles.stats}>
-            <Text style={headerStyles.statsTitle}>Produtividade</Text>
-            <Text style={headerStyles.statsValue}>{profile.productivity_today_pts} pts</Text>
-            <Text style={headerStyles.statsSub}>Média 30D: {profile.productivity_30d_avg}</Text>
-        </View>
+        <Avatar name={ensureText(profile.name)} size={60} style={headerStyles.avatar} />
+        <View style={headerStyles.info}>
+            <Text style={headerStyles.name}>{ensureText(profile.name)}</Text>
+            <Text style={headerStyles.role}>{ensureText(profile.role)}</Text>
+            <View style={headerStyles.badgeRow}>
+                <Text style={headerStyles.badgeText}>Medalha: </Text>
+                <Text style={headerStyles.medal}>{ensureText(profile.medal).toUpperCase()} 🥇</Text>
+            </View>
+        </View>
+        <View style={headerStyles.stats}>
+            <Text style={headerStyles.statsTitle}>Produtividade</Text>
+            <Text style={headerStyles.statsValue}>{ensureText(profile.productivity_today_pts)} pts</Text>
+            <Text style={headerStyles.statsSub}>Média 30D: {ensureText(profile.productivity_30d_avg)}</Text>
+        </View>
     </View>
     </>
 );
@@ -120,13 +125,25 @@ const KpiCard: React.FC<{ item: KpiItem }> = ({ item }) => {
 
     const cardColor = getColor(item.tag_color);
 
-    return (
-        <View style={[kpiStyles.card, { borderColor: cardColor }]}>
-            <Text style={kpiStyles.label}>{item.label}</Text>
-            <Text style={kpiStyles.value}>{item.value}</Text>
-            <Text style={kpiStyles.subLabel}>{item.sub_label}</Text>
-        </View>
-    );
+    const renderSafe = (v: any) => {
+        if (v === null || v === undefined) return '';
+        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v);
+        try {
+            const s = JSON.stringify(v);
+            // truncate long JSON to avoid huge text nodes
+            return s.length > 120 ? s.substr(0, 117) + '...' : s;
+        } catch (e) {
+            return '';
+        }
+    };
+
+    return (
+        <View style={[kpiStyles.card, { borderColor: cardColor }]}>
+            <Text style={kpiStyles.label}>{renderSafe(item.label)}</Text>
+            <Text style={kpiStyles.value}>{renderSafe(item.value)}</Text>
+            <Text style={kpiStyles.subLabel}>{renderSafe(item.sub_label)}</Text>
+        </View>
+    );
 };
 
 
@@ -202,32 +219,32 @@ const OcorrenciaTable: React.FC<{ ocorrencias: OcorrenciaItem[] }> = ({ ocorrenc
             <View key={item.id} style={ocorrenciaStyles.row}>
                 {/* Coluna 1: ID, Cliente e Módulo */}
                 <View style={{ width: '25%' }}>
-                    <Text style={ocorrenciaStyles.idText}>{item.id}</Text>
-                    <Text style={ocorrenciaStyles.clientText} numberOfLines={1}>{item.client}</Text>
-                    <Text style={ocorrenciaStyles.moduleText} numberOfLines={1}>{item.module}</Text>
+                    <Text style={ocorrenciaStyles.idText}>{ensureText(item.id)}</Text>
+                    <Text style={ocorrenciaStyles.clientText} numberOfLines={1}>{ensureText(item.client)}</Text>
+                    <Text style={ocorrenciaStyles.moduleText} numberOfLines={1}>{ensureText(item.module)}</Text>
                 </View>
 
                 {/* Coluna 2: Status e Risco */}
                 <View style={{ width: '25%' }}>
-                    <StatusBadge status={item.status} />
-                    <Text style={[ocorrenciaStyles.riskText, { color: riskColor }]}>
-                        {item.sla_risc_g ? item.sla_risc_g.replace('risco-', '').toUpperCase() : 'SEM RISCO'}
+                    <StatusBadge status={ensureText(item.status)} />
+                    <Text style={[ocorrenciaStyles.riskText, { color: riskColor }]}> 
+                        {item.sla_risc_g ? ensureText(item.sla_risc_g).replace('risco-', '').toUpperCase() : 'SEM RISCO'}
                     </Text>
                 </View>
 
                 {/* Coluna 3: Criação (Data e Hora) */}
                 <View style={{ width: '25%' }}>
-                    <Text style={ocorrenciaStyles.dateValue}>{formatDate(item.created_at)}</Text>
-                    <Text style={ocorrenciaStyles.timeText}>{formatTime(item.created_at)}</Text>
+                    <Text style={ocorrenciaStyles.dateValue}>{ensureText(formatDate(item.created_at))}</Text>
+                    <Text style={ocorrenciaStyles.timeText}>{ensureText(formatTime(item.created_at))}</Text>
                 </View>
 
                 {/* Coluna 4: SLA e Última Atualização */}
                 <View style={{ width: '25%', alignItems: 'flex-end' }}>
-                    <Text style={[ocorrenciaStyles.slaValue, { color: slaColor, borderColor: slaColor }]}>
-                        {item.sla}
+                    <Text style={[ocorrenciaStyles.slaValue, { color: slaColor, borderColor: slaColor }]}> 
+                        {ensureText(item.sla)}
                     </Text>
                     <Text style={ocorrenciaStyles.dateText}>Últ. Atual:</Text>
-                    <Text style={ocorrenciaStyles.timeText}>{formatTime(item.updated_at)}</Text>
+                    <Text style={ocorrenciaStyles.timeText}>{ensureText(formatTime(item.updated_at))}</Text>
                 </View>
             </View>
         );
@@ -286,6 +303,7 @@ const ProfileCurriculumScreen = () => {
                 // VAMOS CONSIDERAR QUE A ROTA CORRETA NO BACKEND É users/curriculum/me (conforme o print de dados)
                 const response = await axios.get(`${API_URL}/users/curriculum/me`); 
                 setData(response.data);
+                console.log('ProfileCurriculumScreen - received data:', response.data);
             } catch (err) {
                 // Se o erro for 404/400, sugere que o backend não tem a rota users/curriculum/me
                 if (axios.isAxiosError(err) && err.response?.status === 404) {
@@ -320,6 +338,76 @@ const ProfileCurriculumScreen = () => {
             </View>
         );
     }
+    // Normaliza KPIs e Charts para formatos variados antes de renderizar
+    const safeString = (v: any) => {
+        if (v === null || v === undefined) return '';
+        if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v);
+        try { return JSON.stringify(v); } catch (e) { return ''; }
+    };
+
+    const normalizeKpis = (raw: any): KpiItem[] => {
+        if (!raw) return [];
+        if (!Array.isArray(raw) && typeof raw === 'object') {
+            return Object.entries(raw).map(([k, v]) => ({
+                label: safeString(k),
+                value: safeString(v),
+                sub_label: '',
+                tag_color: 'risk-baixo',
+            }));
+        }
+        if (!Array.isArray(raw)) return [];
+        return raw.map((item: any) => {
+            if (item == null) return { label: '', value: '', sub_label: '', tag_color: 'risk-baixo' };
+            if (typeof item === 'string') return { label: item, value: '', sub_label: '', tag_color: 'risk-baixo' };
+            if (typeof item === 'number') return { label: '', value: String(item), sub_label: '', tag_color: 'risk-baixo' };
+            const label = item.label || item.title || item.name || item.key || Object.keys(item).find(k => typeof item[k] === 'string') || '';
+            const value = item.value || item.val || item.count || item.points || item.score || (() => {
+                for (const pk of Object.keys(item)) {
+                    const v = item[pk];
+                    if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') return String(v);
+                }
+                return '';
+            })();
+            const sub_label = item.sub_label || item.subtitle || item.meta || item.extra || '';
+            const tag_color = item.tag_color || item.color_tag || 'risk-baixo';
+            return { label: safeString(label), value: safeString(value), sub_label: safeString(sub_label), tag_color };
+        });
+    };
+
+    const normalizeCharts = (raw: any) => {
+        if (!raw) return null;
+        const out: any = {};
+        const toNumber = (v: any) => {
+            const n = Number(v);
+            return Number.isFinite(n) ? n : 0;
+        };
+        const t = raw.tempo_operador || raw.tempo || raw.operator_time || null;
+        if (t) {
+            if (Array.isArray(t.labels) && Array.isArray(t.data)) {
+                out.tempo_operador = { labels: t.labels.map((l: any) => String(l)), data: t.data.map(toNumber), user_index: typeof t.user_index === 'number' ? t.user_index : 0 };
+            } else if (Array.isArray(t)) {
+                out.tempo_operador = { labels: t.map((_, i) => String(i + 1)), data: t.map(toNumber), user_index: 0 };
+            } else if (typeof t === 'object') {
+                const labels = Object.keys(t);
+                out.tempo_operador = { labels, data: labels.map(k => toNumber(t[k])), user_index: 0 };
+            }
+        }
+        const s = raw.status_distribuicao || raw.status || raw.distribuicao || null;
+        if (s) {
+            if (Array.isArray(s.labels) && Array.isArray(s.data)) {
+                out.status_distribuicao = { labels: s.labels.map((l: any) => String(l)), data: s.data.map(toNumber), backgroundColor: Array.isArray(s.backgroundColor) ? s.backgroundColor : [] };
+            } else if (Array.isArray(s)) {
+                out.status_distribuicao = { labels: s.map((v: any) => String(v)), data: s.map((v: any) => toNumber(v)), backgroundColor: [] };
+            } else if (typeof s === 'object') {
+                const labels = Object.keys(s);
+                out.status_distribuicao = { labels, data: labels.map(k => toNumber(s[k])), backgroundColor: [] };
+            }
+        }
+        return out;
+    };
+
+    const normalizedKpis = normalizeKpis(data.kpis);
+    const normalizedCharts = normalizeCharts(data.charts);
 
     return (
         <ScrollView style={styles.container}>
@@ -329,10 +417,10 @@ const ProfileCurriculumScreen = () => {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Jornada do Dia</Text>
                 <View style={jornadaStyles.container}>
-                    <Text style={jornadaStyles.status}>{data.jornada.jornada_status}</Text>
-                    <Text>Primeiro Log: {data.jornada.first_log}</Text>
-                    <Text>Último Log: {data.jornada.last_log}</Text>
-                    <Text>Tempo de Pausa: {data.jornada.pause_time}</Text>
+                    <Text style={jornadaStyles.status}>{ensureText(data.jornada.jornada_status)}</Text>
+                    <Text>Primeiro Log: {ensureText(data.jornada.first_log)}</Text>
+                    <Text>Último Log: {ensureText(data.jornada.last_log)}</Text>
+                    <Text>Tempo de Pausa: {ensureText(data.jornada.pause_time)}</Text>
                 </View>
             </View>
 
@@ -340,15 +428,26 @@ const ProfileCurriculumScreen = () => {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>KPIs e Metas</Text>
                 <View style={kpiStyles.listContainer}>
-                    {data.kpis.map((kpi, index) => (
-                        <KpiCard key={index} item={kpi} />
-                    ))}
+                    {normalizedKpis.length > 0 ? (
+                        normalizedKpis.map((kpi, index) => (
+                            <KpiCard key={index} item={kpi as any} />
+                        ))
+                    ) : (
+                        <Text style={{ color: COLORS.primary }}>KPIs indisponíveis ou em formato inválido.</Text>
+                    )}
                 </View>
             </View>
-            
+
             {/* SEÇÃO DE GRÁFICOS */}
             <View style={styles.section}>
-                <CurriculumCharts charts={data.charts} />
+                <Text style={styles.sectionTitle}>Gráficos</Text>
+                <View style={{ padding: 12 }}>
+                    {normalizedCharts && normalizedCharts.tempo_operador && normalizedCharts.status_distribuicao ? (
+                        <CurriculumCharts charts={normalizedCharts} />
+                    ) : (
+                        <Text style={{ color: '#666' }}>Gráficos indisponíveis — dados incompletos.</Text>
+                    )}
+                </View>
             </View>
 
             {/* SEÇÃO DE OCORRÊNCIAS */}

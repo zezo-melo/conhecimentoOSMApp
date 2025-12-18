@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -15,8 +14,9 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
+import Avatar from '../components/Avatar';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
+// Image picker/upload disabled for now
 import Header from '@/components/Header';
 import BackButton from '@/components/BackButton';
 
@@ -111,24 +111,7 @@ export default function UpdateProfileScreen() {
 
   }, [user]);
 
-  const handleImagePicker = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'Precisamos de permissão para acessar a galeria.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setPhotoUrl(result.assets[0].uri);
-    }
-  };
+  // Image upload is disabled for now — we show initials instead of avatars.
 
   const handleUpdate = async () => {
     if (!name || !phone) {
@@ -151,7 +134,8 @@ export default function UpdateProfileScreen() {
     };
 
     try {
-      await updateProfile(updatedData); 
+      // For now we don't upload photos; just update textual profile fields.
+      await updateProfile(updatedData);
       Alert.alert('Sucesso', 'Perfil atualizado');
       router.replace('/profile');
     } catch (error: any) {
@@ -181,18 +165,9 @@ export default function UpdateProfileScreen() {
               <Text style={styles.subtitle}>Altere suas informações</Text>
             </View>
 
-            <TouchableOpacity onPress={handleImagePicker} style={styles.profileImageContainer}>
-              {hasValidPhoto ? (
-                <Image source={{ uri: photoUrl as string }} style={styles.profileImage} />
-              ) : (
-                <View style={styles.initialContainer}>
-                  <Text style={styles.initialText}>{getInitial(user?.name || name)}</Text>
-                </View>
-              )}
-              <View style={styles.cameraIcon}>
-                <Ionicons name="camera" size={24} color="#fff" />
-              </View>
-            </TouchableOpacity>
+            <View style={styles.profileImageContainer}>
+              <Avatar name={user?.name || name} size={120} />
+            </View>
 
             <View style={styles.form}>
               {/* Nome */}

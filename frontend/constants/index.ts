@@ -59,3 +59,6 @@ export const IOS_CONFIG = {
     'Accept': 'application/json',
   }
 };
+
+// URL pública do backend BFF de indicadores (pode ser sobrescrita por variável de ambiente)
+export const INDICATORS_BFF_URL = (process?.env?.EXPO_PUBLIC_INDICATORS_URL as string) || 'https://bff-indicadores.onrender.com';

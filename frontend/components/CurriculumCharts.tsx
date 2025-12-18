@@ -36,6 +36,17 @@ const COLORS = {
 const screenWidth = Dimensions.get('window').width - 40; 
 
 const CurriculumCharts: React.FC<ChartsProps> = ({ charts }) => {
+    // Validações simples para evitar que objetos/arrays inválidos sejam renderizados
+    const isValidBar = charts && Array.isArray(charts.tempo_operador?.labels) && Array.isArray(charts.tempo_operador?.data) && typeof charts.tempo_operador?.user_index === 'number';
+    const isValidPie = charts && Array.isArray(charts.status_distribuicao?.labels) && Array.isArray(charts.status_distribuicao?.data);
+
+    if (!isValidBar || !isValidPie) {
+        return (
+            <View style={styles.invalidContainer}>
+                <Text style={styles.invalidText}>Gráficos indisponíveis — dados incompletos ou em formato inválido.</Text>
+            </View>
+        );
+    }
     // 1. Data para o Gráfico de Barras (Tempo Operador)
     const barChartData = {
         labels: charts.tempo_operador.labels,
@@ -55,9 +66,9 @@ const CurriculumCharts: React.FC<ChartsProps> = ({ charts }) => {
     // 2. Data para o Gráfico de Pizza (Status Distribuição)
     const pieChartData = charts.status_distribuicao.labels.map((label, index) => ({
         name: label,
-        population: charts.status_distribuicao.data[index],
+        population: Number(charts.status_distribuicao.data[index]) || 0,
         // Usa a cor definida no Backend (para corresponder ao seu mock)
-        color: charts.status_distribuicao.backgroundColor[index] || COLORS.secondary, 
+        color: charts.status_distribuicao.backgroundColor?.[index] || COLORS.secondary, 
         legendFontColor: COLORS.text,
         legendFontSize: 12,
     }));
@@ -125,6 +136,14 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingHorizontal: 0,
         marginVertical: 10,
+    }
+    ,
+    invalidContainer: {
+        padding: 12,
+        alignItems: 'center',
+    },
+    invalidText: {
+        color: COLORS.text,
     }
 });
 
