@@ -29,21 +29,16 @@ const getApiUrl = ( ) => {
     return envUrl;
   }
 
-  // >>>>>> LÓGICA ATUALIZADA AQUI <<<<<<
-  if (__DEV__) {
-    // Se for Android (Emulador), usa o IP especial (10.0.2.2) para o backend local.
-    if (Platform.OS === 'android') {
-      return API_CONFIG.emulator;
-    }
-    
-    // Para iOS ou outras plataformas em desenvolvimento, mantém a URL pública 
-    // ou use 'http://localhost:3000/api' se o seu backend local não usar HTTPS.
-    return API_CONFIG.localNetwork;
-  }
-  // >>>>>> FIM DA LÓGICA ATUALIZADA <<<<<<
+// >>>>>> LÓGICA ATUALIZADA AQUI <<<<<<
+// Mesmo em desenvolvimento, vamos priorizar a API pública estável.
+// Se quiser voltar ao backend local, defina EXPO_PUBLIC_API_URL ou altere manualmente abaixo.
+if (__DEV__) {
+  return API_CONFIG.vercel; // evita 10.0.2.2 quando o backend local não está rodando
+}
+// >>>>>> FIM DA LÓGICA ATUALIZADA <<<<<<
 
-  // Para produção, use a mesma URL pública (outra opção seria API_CONFIG.vercel)
-  return API_CONFIG.vercel;
+// Para produção, usa a mesma URL pública
+return API_CONFIG.vercel;
 };
 
 // A URL base que aponta para o seu backend.
