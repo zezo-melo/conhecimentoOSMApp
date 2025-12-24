@@ -20,9 +20,9 @@ const MENU_OPTIONS = [
   { 
     id: '1a', 
     title: 'Indicadores', 
-    icon: '📄', 
-    route: '/ProfileCurriculumScreen', 
-    onPress: () => router.push('/ProfileCurriculumScreen') 
+    icon: '📈', 
+    route: '/Indicators', 
+    onPress: () => router.push('/(tabs)/Indicators') 
   },
   // {
   //   id: '1b',
