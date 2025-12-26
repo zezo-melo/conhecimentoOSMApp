@@ -15,7 +15,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { INDICATORS_BFF_URL, API_URL } from '../../constants';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
-import { formatName } from '../../utils/formatName';
 
 interface Ticket {
   'N° Chamado': string;
@@ -53,6 +52,14 @@ const COLORS = {
 };
 
 const screenWidth = Dimensions.get('window').width;
+
+// ============================================
+// TOKEN DO BFF DE INDICADORES
+// ============================================
+// Para atualizar o token, substitua o valor abaixo pelo novo token do Postman
+// Exemplo: const INDICATORS_BFF_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+// Deixe como null para usar o token do app principal
+const INDICATORS_BFF_TOKEN: string | null = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJvYmVydG8ubWVsb0Bvc20uY29tLmJyIiwibmFtZSI6Ikpvc8OpIFJvYmVydG8gRmVycmVpcmEgTWVsbyIsImlhdCI6MTc2Njc1NTIwMCwiZXhwIjoxNzY2Nzg0MDAwfQ.pgvk9JdYgqPqi2kLKzgWEHDU1_Md7ujnUG38YJewofc';
 
 // Função para normalizar nomes
 const normalizeName = (name: string): string => {
@@ -104,6 +111,8 @@ export default function IndicatorsScreen() {
   const [userTickets, setUserTickets] = useState<Ticket[]>([]);
   const [allTickets, setAllTickets] = useState<Ticket[]>([]);
   const [userRanking, setUserRanking] = useState<{ position: number; points: number } | null>(null);
+  const [showTokenInput, setShowTokenInput] = useState(false);
+  const [newToken, setNewToken] = useState('');
 
   // Função para buscar ranking do usuário
   useEffect(() => {
@@ -142,7 +151,13 @@ export default function IndicatorsScreen() {
       setError(null);
 
       try {
-        let token = await AsyncStorage.getItem('@AppBeneficios:indicatorsToken');
+        // Prioridade: 1) Token definido no código, 2) Token do AsyncStorage, 3) Token do app
+        let token = INDICATORS_BFF_TOKEN;
+        
+        if (!token) {
+          token = await AsyncStorage.getItem('@AppBeneficios:indicatorsToken');
+        }
+        
         if (!token) {
           token = await AsyncStorage.getItem('@AppBeneficios:token');
         }
@@ -224,6 +239,88 @@ export default function IndicatorsScreen() {
 
     fetchDashboardData();
   }, [user?.name]);
+
+  // Função para salvar novo token
+  const handleSaveToken = async () => {
+    if (!newToken.trim()) {
+      Alert.alert('Erro', 'Por favor, insira um token válido.');
+      return;
+    }
+
+    try {
+      await AsyncStorage.setItem('@AppBeneficios:indicatorsToken', newToken.trim());
+      Alert.alert('Sucesso', 'Token salvo! Recarregando dados...');
+      setShowTokenInput(false);
+      setNewToken('');
+      // Recarrega os dados
+      setLoading(true);
+      setError(null);
+      // Força re-render do useEffect
+      const fetchData = async () => {
+        let token = await AsyncStorage.getItem('@AppBeneficios:indicatorsToken');
+        if (!token) {
+          token = await AsyncStorage.getItem('@AppBeneficios:token');
+        }
+        
+        if (!token) {
+          setError('Token de autenticação não encontrado. Faça login novamente.');
+          setLoading(false);
+          return;
+        }
+
+        const url = `${INDICATORS_BFF_URL}/api/dashboard-data`;
+        console.log('🌐 [Indicators] Buscando dados de:', url);
+        
+        let response;
+        try {
+          response = await axios.get<DashboardData>(url, {
+            timeout: 15000,
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch (firstError: any) {
+          if (firstError.response?.status === 404) {
+            console.log('🔄 [Indicators] Tentando sem /api...');
+            const urlWithoutApi = `${INDICATORS_BFF_URL}/dashboard-data`;
+            response = await axios.get<DashboardData>(urlWithoutApi, {
+              timeout: 15000,
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            });
+          } else {
+            throw firstError;
+          }
+        }
+
+        console.log('✅ [Indicators] Dados recebidos:', response.data);
+
+        if (response.data && response.data.tickets) {
+          const tickets = response.data.tickets;
+          setAllTickets(tickets);
+
+          if (user?.name) {
+            console.log('🔍 [Indicators] Filtrando tickets para:', user.name);
+            const filtered = tickets.filter(ticket => 
+              matchName(ticket['Nome Completo do Operador'], user.name)
+            );
+            console.log(`📊 [Indicators] Encontrados ${filtered.length} tickets para ${user.name}`);
+            setUserTickets(filtered);
+          } else {
+            setUserTickets(tickets);
+          }
+        } else {
+          setError('Formato de resposta inesperado da API.');
+        }
+      };
+      fetchData();
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível salvar o token.');
+    }
+  };
 
   // Função para determinar nível baseado em pontos
   const mapLevel = (points: number): string => {
@@ -331,10 +428,6 @@ export default function IndicatorsScreen() {
       '#9c27b0',
     ];
 
-    // Module distribution (Bar Chart)
-    const moduleLabels = Object.keys(metrics.moduleCount).slice(0, 5);
-    const moduleData = moduleLabels.map(label => metrics.moduleCount[label]);
-
     return {
       statusPie: statusLabels.map((label, index) => ({
         name: label.length > 15 ? label.substring(0, 15) + '...' : label,
@@ -343,12 +436,6 @@ export default function IndicatorsScreen() {
         legendFontColor: COLORS.text,
         legendFontSize: 11,
       })),
-      moduleBar: {
-        labels: moduleLabels.map(l => l.length > 10 ? l.substring(0, 10) + '...' : l),
-        datasets: [{
-          data: moduleData,
-        }],
-      },
     };
   }, [metrics]);
 
@@ -368,6 +455,52 @@ export default function IndicatorsScreen() {
         <Text style={styles.title}>Meus Indicadores</Text>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
+          
+          {(error.includes('403') || error.includes('Acesso negado') || error.includes('Token')) && (
+            <View style={styles.tokenUpdateContainer}>
+              <Text style={styles.tokenUpdateHint}>
+                O token do BFF pode ter expirado. Você pode atualizar o token aqui:
+              </Text>
+              
+              {!showTokenInput ? (
+                <TouchableOpacity 
+                  style={styles.tokenButton}
+                  onPress={() => setShowTokenInput(true)}
+                >
+                  <Text style={styles.tokenButtonText}>Atualizar Token do BFF</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.tokenInputContainer}>
+                  <Text style={styles.tokenInput}
+                    placeholder="Cole o novo token aqui..."
+                    placeholderTextColor={COLORS.textMuted}
+                    value={newToken}
+                    onChangeText={setNewToken}
+                    multiline
+                    autoCapitalize="none"
+                    secureTextEntry={false}
+                  />
+                  <View style={styles.tokenButtonsRow}>
+                    <TouchableOpacity 
+                      style={[styles.tokenButton, styles.tokenButtonSecondary]}
+                      onPress={() => {
+                        setShowTokenInput(false);
+                        setNewToken('');
+                      }}
+                    >
+                      <Text style={[styles.tokenButtonText, { color: COLORS.text }]}>Cancelar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.tokenButton}
+                      onPress={handleSaveToken}
+                    >
+                      <Text style={styles.tokenButtonText}>Salvar Token</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
     );
@@ -509,114 +642,115 @@ export default function IndicatorsScreen() {
         </View>
       )}
 
-      {/* Gráfico de Módulos */}
-      {chartData.moduleBar.labels.length > 0 && (
+      {/* Tabela de Ocorrências - Estilo do Print */}
+      {displayTickets.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Chamados por Módulo</Text>
-          <View style={styles.chartContainer}>
-            <BarChart
-              data={chartData.moduleBar}
-              width={screenWidth - 40}
-              height={220}
-              chartConfig={{
-                backgroundColor: COLORS.card,
-                backgroundGradientFrom: COLORS.card,
-                backgroundGradientTo: COLORS.card,
-                decimalPlaces: 0,
-                color: (opacity = 1) => COLORS.primary,
-                labelColor: (opacity = 1) => COLORS.text,
-                style: {
-                  borderRadius: 16,
-                },
-                barPercentage: 0.7,
-              }}
-              style={styles.chart}
-              fromZero
-              showValuesOnTopOfBars
-            />
+          <Text style={styles.sectionTitle}>Ocorrências do dia - N1/N2</Text>
+          <Text style={styles.sectionDescription}>
+            Histórico das ocorrências com status, datas, SLA, risco de glosa e estimativa de fechamento com base em histórico.
+          </Text>
+          
+          {/* Cabeçalho da Tabela */}
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableHeaderText, { flex: 0.8 }]}>ID</Text>
+            <Text style={[styles.tableHeaderText, { flex: 1.2 }]}>CLIENTE</Text>
+            <Text style={[styles.tableHeaderText, { flex: 1 }]}>MÓDULO</Text>
+            <Text style={[styles.tableHeaderText, { flex: 1.3 }]}>STATUS</Text>
+            <Text style={[styles.tableHeaderText, { flex: 1 }]}>CRIAÇÃO</Text>
+            <Text style={[styles.tableHeaderText, { flex: 1.2 }]}>ÚLT. ATUALIZAÇÃO</Text>
+            <Text style={[styles.tableHeaderText, { flex: 1 }]}>SLA</Text>
+          </View>
+
+          {/* Linhas da Tabela */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View>
+              {displayTickets.slice(0, 10).map((ticket, index) => {
+                const age = calculateDays(ticket['Data de Criação']);
+                const isOpen = ticket['Data de Finalização'] === '00-00-0000';
+                const isCritical = isOpen && age > 7;
+                const isExpired = ticket['SLA de Solução'] !== 'Em Dia';
+                
+                // Formata data para exibição
+                const formatDate = (dateStr: string) => {
+                  if (!dateStr || dateStr === '00-00-0000') return '-';
+                  const [day, month] = dateStr.split('-');
+                  return `${day}/${month}`;
+                };
+                
+                // Determina cor do status
+                const getStatusColor = (status: string) => {
+                  if (status.includes('análise') || status.includes('fila')) {
+                    return COLORS.info;
+                  } else if (status.includes('homologação')) {
+                    return COLORS.success;
+                  } else if (status.includes('Aguardando') || status.includes('aguardando')) {
+                    return COLORS.warning;
+                  }
+                  return COLORS.textLight;
+                };
+
+                return (
+                  <View key={`${ticket['N° Chamado']}-${index}`} style={styles.tableRow}>
+                    <Text style={[styles.tableCell, { flex: 0.8, fontWeight: '600' }]}>
+                      {ticket['N° Chamado']}
+                    </Text>
+                    <Text style={[styles.tableCell, { flex: 1.2 }]} numberOfLines={1}>
+                      {ticket['Fantasia'] || 'N/A'}
+                    </Text>
+                    <Text style={[styles.tableCell, { flex: 1 }]} numberOfLines={1}>
+                      {ticket['Módulo'] || 'Sem módulo'}
+                    </Text>
+                    <View style={[styles.tableCell, { flex: 1.3 }]}>
+                      <View style={[
+                        styles.statusPill,
+                        { backgroundColor: getStatusColor(ticket['Nome do Status']) + '20' }
+                      ]}>
+                        <Text style={[
+                          styles.statusPillText,
+                          { color: getStatusColor(ticket['Nome do Status']) }
+                        ]}>
+                          {ticket['Nome do Status']}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.tableCell, { flex: 1, fontSize: 11 }]}>
+                      {formatDate(ticket['Data de Criação'])}
+                    </Text>
+                    <Text style={[styles.tableCell, { flex: 1.2, fontSize: 11 }]}>
+                      {isOpen ? formatDate(ticket['Data de Criação']) : formatDate(ticket['Data de Finalização'])}
+                    </Text>
+                    <View style={[styles.tableCell, { flex: 1 }]}>
+                      <View style={[
+                        styles.slaPill,
+                        isExpired ? styles.slaExpired : styles.slaGood
+                      ]}>
+                        <Text style={[
+                          styles.slaPillText,
+                          isExpired && { color: COLORS.danger }
+                        ]}>
+                          {ticket['SLA de Solução'] === 'Em Dia' 
+                            ? `SLA ${metrics.slaPercent}% - ${age}d`
+                            : `SLA ${metrics.slaPercent}% - vencido`}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          {/* Resumo */}
+          <View style={styles.summaryContainer}>
+            <Text style={styles.summaryText}>
+              Status: {Object.entries(metrics.statusCount).map(([status, count]) => `${count} ${status.toLowerCase()}`).join(' - ')}
+            </Text>
+            <Text style={styles.summaryText}>
+              Chamados com SLA crítico: {metrics.criticalTickets}. {metrics.criticalTickets > 0 ? 'Risco moderado de glosa.' : 'Sem riscos.'}
+            </Text>
           </View>
         </View>
       )}
-
-      {/* Tabela de Ocorrências */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ocorrências do Dia</Text>
-        <Text style={styles.sectionDescription}>
-          Histórico das ocorrências com status, datas e SLA
-        </Text>
-        
-        {displayTickets.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Nenhum ticket encontrado.</Text>
-          </View>
-        ) : (
-          <View style={styles.tableContainer}>
-            {displayTickets.slice(0, 10).map((ticket, index) => {
-              const age = calculateDays(ticket['Data de Criação']);
-              const isOpen = ticket['Data de Finalização'] === '00-00-0000';
-              const isCritical = isOpen && age > 7;
-              
-              return (
-                <View key={`${ticket['N° Chamado']}-${index}`} style={styles.tableRow}>
-                  <View style={styles.tableCell}>
-                    <Text style={styles.tableCellLabel}>Chamado</Text>
-                    <Text style={styles.tableCellValue}>{ticket['N° Chamado']}</Text>
-                  </View>
-                  <View style={styles.tableCell}>
-                    <Text style={styles.tableCellLabel}>Cliente</Text>
-                    <Text style={styles.tableCellValue} numberOfLines={1}>
-                      {ticket['Fantasia'] || 'N/A'}
-                    </Text>
-                  </View>
-                  <View style={styles.tableCell}>
-                    <Text style={styles.tableCellLabel}>Status</Text>
-                    <View style={[
-                      styles.statusBadge,
-                      ticket['SLA de Solução'] === 'Em Dia' ? styles.statusGood : styles.statusWarning
-                    ]}>
-                      <Text style={styles.statusText}>{ticket['Nome do Status']}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.tableCell}>
-                    <Text style={styles.tableCellLabel}>Idade</Text>
-                    <Text style={[
-                      styles.tableCellValue,
-                      isCritical && { color: COLORS.danger, fontWeight: 'bold' }
-                    ]}>
-                      {age}d
-                    </Text>
-                  </View>
-                  <View style={styles.tableCell}>
-                    <Text style={styles.tableCellLabel}>SLA</Text>
-                    <Text style={[
-                      styles.tableCellValue,
-                      ticket['SLA de Solução'] === 'Em Dia' ? { color: COLORS.success } : { color: COLORS.danger }
-                    ]}>
-                      {ticket['SLA de Solução']}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </View>
-
-      {/* Resumo */}
-      <View style={styles.summarySection}>
-        <Text style={styles.summaryTitle}>Resumo</Text>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryText}>
-            Status: {Object.entries(metrics.statusCount).map(([status, count]) => `${count} ${status}`).join(' - ')}
-          </Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryText}>
-            Chamados com SLA crítico: {metrics.criticalTickets}. 
-            {metrics.criticalTickets > 0 ? ' Risco moderado de glosa.' : ' Sem riscos.'}
-          </Text>
-        </View>
-      </View>
 
     </ScrollView>
   );
@@ -729,10 +863,12 @@ const styles = StyleSheet.create({
   chartContainer: {
     alignItems: 'center',
     marginTop: 8,
+    paddingBottom: 10,
   },
   chart: {
     borderRadius: 16,
     marginVertical: 8,
+    paddingRight: 10,
   },
   tableContainer: {
     marginTop: 8,
@@ -810,6 +946,55 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#c62828',
     fontSize: 16,
+    marginBottom: 12,
+  },
+  tokenUpdateContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#fff3cd',
+    borderRadius: 8,
+  },
+  tokenUpdateHint: {
+    fontSize: 13,
+    color: COLORS.text,
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  tokenInputContainer: {
+    gap: 8,
+  },
+  tokenInput: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 12,
+    color: COLORS.text,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    fontFamily: 'monospace',
+  },
+  tokenButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tokenButton: {
+    backgroundColor: COLORS.primary,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+  },
+  tokenButtonSecondary: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  tokenButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
   emptyContainer: {
     padding: 32,
@@ -982,5 +1167,73 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.primary,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
+    marginBottom: 4,
+  },
+  tableHeaderText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: COLORS.primaryDark,
+    textTransform: 'uppercase',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    alignItems: 'center',
+    minWidth: screenWidth - 80,
+  },
+  tableCell: {
+    fontSize: 12,
+    color: COLORS.text,
+    paddingHorizontal: 4,
+  },
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  statusPillText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  slaPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  slaGood: {
+    backgroundColor: COLORS.success + '20',
+  },
+  slaExpired: {
+    backgroundColor: COLORS.danger + '20',
+  },
+  slaPillText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLORS.success,
+  },
+  summaryContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    gap: 8,
+  },
+  summaryText: {
+    fontSize: 12,
+    color: COLORS.text,
+    lineHeight: 18,
   },
 });

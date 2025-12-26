@@ -49,16 +49,56 @@ export default function RankScreen() {
         setLoading(true);
         setError(null);
         const token = await AsyncStorage.getItem('@AppBeneficios:token');
-        if (!token) throw new Error('Usuário não autenticado');
-        const res = await fetch(`${API_URL}/leaderboard?limit=${pageSize}&skip=0`, {
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        if (!token) {
+          setError('Usuário não autenticado. Faça login novamente.');
+          setLoading(false);
+          return;
+        }
+        
+        // A API_URL já inclui /api, então não precisa adicionar novamente
+        const url = `${API_URL}/leaderboard?limit=${pageSize}&skip=0`;
+        console.log('🌐 [Rank] Buscando ranking de:', url);
+        console.log('🔑 [Rank] Token:', token.substring(0, 20) + '...');
+        
+        const res = await fetch(url, {
+          headers: { 
+            'Content-Type': 'application/json', 
+            Authorization: `Bearer ${token}` 
+          },
         });
-        if (!res.ok) throw new Error('Falha ao carregar ranking');
+        
+        console.log('📡 [Rank] Status da resposta:', res.status);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('❌ [Rank] Erro na resposta:', res.status, errorText);
+          
+          // Tratamento mais detalhado de erros
+          if (res.status === 401) {
+            throw new Error('Token inválido ou expirado. Faça login novamente.');
+          } else if (res.status === 403) {
+            throw new Error('Acesso negado. Verifique suas permissões.');
+          } else if (res.status === 404) {
+            throw new Error('Endpoint não encontrado. Verifique a configuração da API.');
+          } else if (res.status === 500) {
+            throw new Error('Erro no servidor. Tente novamente mais tarde.');
+          } else {
+            throw new Error(`Erro ao carregar ranking (${res.status}). Tente novamente.`);
+          }
+        }
+        
         const data = await res.json();
+        console.log('✅ [Rank] Dados recebidos:', {
+          leaderboardCount: data.leaderboard?.length || 0,
+          hasMe: !!data.me,
+          total: data.total
+        });
+        
         setLeaderboard(data.leaderboard || []);
         setMe(data.me || null);
         setTotal(data.total || 0);
       } catch (e: any) {
+        console.error('❌ [Rank] Erro completo ao buscar ranking:', e);
         setError(e.message || 'Erro ao carregar ranking');
       } finally {
         setLoading(false);
@@ -72,18 +112,29 @@ export default function RankScreen() {
     try {
       setIsFetchingMore(true);
       const token = await AsyncStorage.getItem('@AppBeneficios:token');
-      if (!token) throw new Error('Usuário não autenticado');
+      if (!token) {
+        console.error('Token não encontrado ao carregar mais');
+        return;
+      }
+      
       const res = await fetch(
         `${API_URL}/leaderboard?limit=${pageSize}&skip=${leaderboard.length}`,
         {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         }
       );
-      if (!res.ok) throw new Error('Falha ao carregar mais');
+      
+      if (!res.ok) {
+        console.error('Erro ao carregar mais:', res.status);
+        return; // Silenciosamente falha, não mostra erro para o usuário
+      }
+      
       const data = await res.json();
       setLeaderboard((prev) => [...prev, ...(data.leaderboard || [])]);
       setTotal(data.total || total);
-    } catch {
+    } catch (error) {
+      console.error('Erro ao carregar mais ranking:', error);
+      // Não mostra erro para o usuário ao carregar mais
     } finally {
       setIsFetchingMore(false);
     }
